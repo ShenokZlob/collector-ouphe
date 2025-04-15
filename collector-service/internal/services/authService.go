@@ -9,37 +9,46 @@ import (
 )
 
 type AuthService struct {
-	authRepository AuthRepository
+	authRepository AuthRepositorer
 }
 
-type AuthRepository interface {
-	CreateUser(user *models.User) *models.ResponseErr
-	GetUserByTelegramID(telegramId int64) (*models.User, *models.ResponseErr)
+type AuthRepositorer interface {
+	CreateUser(user *models.User) (*models.User, *models.ResponseErr)
+	FindUserByTelegramID(telegramId int64) (*models.User, *models.ResponseErr)
 }
 
-func NewAuthRepository(authRepository AuthRepository) *AuthService {
+func NewAuthService(authRepository AuthRepositorer) *AuthService {
 	return &AuthService{
 		authRepository: authRepository,
 	}
 }
 
-func (as *AuthService) Register(user *models.User) *models.ResponseErr {
+func (as AuthService) Register(user *models.User) (*models.User, *models.ResponseErr) {
 	respErr := validateUser(user)
 	if respErr != nil {
-		return respErr
+		return nil, respErr
 	}
-	return as.authRepository.CreateUser(user)
+
+	createdUser, respErr := as.authRepository.CreateUser(user)
+	if respErr != nil {
+		return nil, respErr
+	}
+
+	createdUser.PrepareForResponse()
+	return createdUser, nil
 }
 
-func (as *AuthService) Who(telegramId string) (*models.User, *models.ResponseErr) {
+func (as AuthService) Who(telegramId string) (*models.User, *models.ResponseErr) {
 	tgIdInt64, respErr := parseTelegramID(telegramId)
 	if respErr != nil {
 		return nil, respErr
 	}
-	user, respErr := as.authRepository.GetUserByTelegramID(tgIdInt64)
+
+	user, respErr := as.authRepository.FindUserByTelegramID(tgIdInt64)
 	if respErr != nil {
 		return nil, respErr
 	}
+
 	user.PrepareForResponse()
 	return user, nil
 }

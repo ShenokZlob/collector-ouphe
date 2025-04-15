@@ -22,27 +22,41 @@ type App struct {
 func InitServer(config *viper.Viper, logger *zap.Logger, db *mongo.Client) *App {
 	host := config.GetString("server_http.host")
 
-	reps := repositories.NewRepository(db)
-	servs := services.NewService(reps)
+	// Init repository
+	rep := repositories.NewRepository(db)
 
-	ctrlAuth := controllers.NewAuthController(servs)
-	ctrlCollections := controllers.NewCollectionsController(servs)
-	ctrlCards := controllers.NewCardsController(servs)
+	// Init services
+	servAuth := services.NewAuthService(rep)
+	// servCollections := services.NewCollectionsService(rep)
+	// servCards := services.NewCardsService(rep)
+
+	ctrlAuth := controllers.NewAuthController(servAuth)
+	// ctrlCollections := controllers.NewCollectionsController(servCollections)
+	// ctrlCards := controllers.NewCardsController(servCards)
 
 	router := gin.Default()
+	// authMiddleware := middleware.JWTMiddleware(os.Getenv("JWT_SECRET"))
 
-	router.POST("/register", ctrlAuth.Register)
-	router.GET("/user/telegram/:telegram_id", ctrlAuth.Who)
+	// public routes
+	public := router.Group("/")
+	{
+		public.POST("/register", ctrlAuth.Register)
+		public.GET("/user/telegram/:telegram_id", ctrlAuth.Who)
+	}
 
-	router.GET("/collections", ctrlCollections.AllCollections)
-	router.POST("/collections", ctrlCollections.CreateCollection)
-	router.PATCH("/collections/:id", ctrlCollections.RenameCollection)
-	router.DELETE("/collections/:id", ctrlCollections.DeleteCollection)
+	// protected routes
+	// authorized := router.Group("/", authMiddleware)
+	{
+		// authorized.GET("/collections", ctrlCollections.AllCollections)
+		// authorized.POST("/collections", ctrlCollections.CreateCollection)
+		// roauthorizeduter.PATCH("/collections/:id", ctrlCollections.RenameCollection)
+		// authorized.DELETE("/collections/:id", ctrlCollections.DeleteCollection)
 
-	router.GET("/collections/:id/cards", ctrlCards.AllCardsByCollection)
-	router.POST("/collections/:id/cards", ctrlCards.AddCardToCollection)
-	router.PATCH("/collections/:id/cards/:id", ctrlCards.SetCardCount)
-	router.DELETE("/collections/:id/cards/:id", ctrlCards.DeleteCard)
+		// authorized.GET("/collections/:id/cards", ctrlCards.AllCardsByCollection)
+		// authorized.POST("/collections/:id/cards", ctrlCards.AddCardToCollection)
+		// authorized.PATCH("/collections/:id/cards/:id", ctrlCards.SetCardCount)
+		// authorized.DELETE("/collections/:id/cards/:id", ctrlCards.DeleteCard)
+	}
 
 	server := &http.Server{
 		Addr:    host,

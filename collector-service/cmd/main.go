@@ -14,9 +14,6 @@ import (
 )
 
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
-	defer stop()
-
 	logger, err := zap.NewProduction()
 	if err != nil {
 		log.Fatalf("Failed to init logger: %v", err)
@@ -32,6 +29,9 @@ func main() {
 
 	appServer := servers.InitServer(cfg, logger, db)
 	logger.Info("Starting app server")
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
 	go appServer.Run()
 
 	<-ctx.Done()

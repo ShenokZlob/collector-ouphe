@@ -9,4 +9,5 @@ host = "localhost:8080"
 # The connection string to connect to the MongoDB database
 # The default value is "mongodb://localhost:27017"
 [database]
-conn_string = "mongodb://localhost:27017"
+conn_string = "mongodb://root:example@localhost:27017"
+# conn_string = "mongodb://your_user:your_password@localhost:27017/?authSource=admin"
