@@ -1,0 +1,12 @@
+# This file is used to configure the collector service
+
+# HTTP server configuration
+# The address and port on which the HTTP server will listen
+[server_http]
+host = "localhost:8080"
+
+# MongoDB connection string
+# The connection string to connect to the MongoDB database
+# The default value is "mongodb://localhost:27017"
+[database]
+conn_string = "mongodb://localhost:27017"
