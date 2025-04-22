@@ -1,6 +1,8 @@
 package servers
 
 import (
+	"context"
+
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
@@ -12,5 +14,10 @@ func InitDataBase(config *viper.Viper) *mongo.Client {
 	if err != nil {
 		panic(err)
 	}
+
+	if err := client.Ping(context.TODO(), nil); err != nil {
+		panic(err)
+	}
+
 	return client
 }

@@ -7,26 +7,30 @@ type CollectionsService struct {
 }
 
 type CollectionsRepositorer interface {
+	UsersCollections(userId string) ([]*models.UserCollectionRef, *models.ResponseErr)
+	CreateCollection(collection *models.Collection) (*models.Collection, *models.ResponseErr)
+	RenameCollection(collection *models.Collection) *models.ResponseErr
+	DeleteCollection(collection *models.Collection) *models.ResponseErr
 }
 
-func NewCollectionService(collectionRepository CollectionsRepositorer) *CollectionsService {
+func NewCollectionsService(collectionRepository CollectionsRepositorer) *CollectionsService {
 	return &CollectionsService{
 		collectionRepository: collectionRepository,
 	}
 }
 
-func (cs CollectionsService) AllCollections(userId string) ([]*models.Collection, *models.ResponseErr) {
-	panic("not implemented") // TODO: Implement
+func (cs CollectionsService) AllUsersCollections(userId string) ([]*models.UserCollectionRef, *models.ResponseErr) {
+	return cs.collectionRepository.UsersCollections(userId)
 }
 
 func (cs CollectionsService) CreateCollection(collection *models.Collection) (*models.Collection, *models.ResponseErr) {
-	panic("not implemented") // TODO: Implement
+	return cs.collectionRepository.CreateCollection(collection)
 }
 
 func (cs CollectionsService) RenameCollection(collecion *models.Collection) *models.ResponseErr {
-	panic("not implemented") // TODO: Implement
+	return cs.collectionRepository.RenameCollection(collecion)
 }
 
 func (cs CollectionsService) DeleteCollection(collection *models.Collection) *models.ResponseErr {
-	panic("not implemented") // TODO: Implement
+	return cs.collectionRepository.DeleteCollection(collection)
 }

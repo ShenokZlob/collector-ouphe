@@ -9,30 +9,39 @@ import (
 
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/config"
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/servers"
+	"github.com/joho/godotenv"
 
 	"go.uber.org/zap"
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	logger, err := zap.NewProduction()
 	if err != nil {
 		log.Fatalf("Failed to init logger: %v", err)
 	}
 	defer logger.Sync()
-	logger.Info("Init logger")
+	// logger.Info("Init logger")
 
-	cfg := config.InitConfig()
 	logger.Info("Init config")
+	cfg := config.InitConfig()
 
-	db := servers.InitDataBase(cfg)
 	logger.Info("Init database")
+	db := servers.InitDataBase(cfg)
 
+	logger.Info("Init app server")
 	appServer := servers.InitServer(cfg, logger, db)
-	logger.Info("Starting app server")
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
+
+	logger.Info("Starting app")
 	go appServer.Run()
+	logger.Info("App started")
 
 	<-ctx.Done()
 

@@ -34,7 +34,6 @@ func (as AuthService) Register(user *models.User) (*models.User, *models.Respons
 		return nil, respErr
 	}
 
-	createdUser.PrepareForResponse()
 	return createdUser, nil
 }
 
@@ -49,7 +48,6 @@ func (as AuthService) Who(telegramId string) (*models.User, *models.ResponseErr)
 		return nil, respErr
 	}
 
-	user.PrepareForResponse()
 	return user, nil
 }
 

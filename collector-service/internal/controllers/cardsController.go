@@ -1,28 +1,85 @@
 package controllers
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
+
+	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/models"
+	"github.com/gin-gonic/gin"
+)
 
 type CardsController struct {
-	cardsService CardsService
+	cardsService CardsServicer
 }
 
-type CardsService interface {
-	AllCardsByCollection()
-	AddCardToCollection()
-	SetCardCount()
-	DeleteCard()
+type CardsServicer interface {
+	ListCardsInCollection(collectionId string) ([]*models.Card, *models.ResponseErr)
+	AddCardToCollection(collectionId string, card *models.Card) *models.ResponseErr
+	SetCardCountInCollection(collectionId string, card *models.Card) *models.ResponseErr
+	DeleteCardFromCollection(collectionId string, card *models.Card) *models.ResponseErr
 }
 
-func NewCardsController(cardsService CardsService) *CardsController {
+func NewCardsController(cardsService CardsServicer) *CardsController {
 	return &CardsController{
 		cardsService: cardsService,
 	}
 }
 
-func (cc *CardsController) AllCardsByCollection(ctx *gin.Context) {}
+func (cc CardsController) ListCardsInCollection(ctx *gin.Context) {
+	collectionId := ctx.Param("id")
+	cards, respErr := cc.cardsService.ListCardsInCollection(collectionId)
+	if respErr != nil {
+		ctx.AbortWithStatusJSON(respErr.Status, respErr)
+		return
+	}
 
-func (cc *CardsController) AddCardToCollection(ctx *gin.Context) {}
+	ctx.JSON(200, cards)
+}
 
-func (cc *CardsController) SetCardCount(ctx *gin.Context) {}
+func (cc CardsController) AddCardToCollection(ctx *gin.Context) {
+	collectionId := ctx.Param("id")
+	var card models.Card
+	if err := ctx.ShouldBindJSON(&card); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
 
-func (cc *CardsController) DeleteCard(ctx *gin.Context) {}
+	respErr := cc.cardsService.AddCardToCollection(collectionId, &card)
+	if respErr != nil {
+		ctx.AbortWithStatusJSON(respErr.Status, respErr)
+		return
+	}
+
+	ctx.Status(http.StatusCreated)
+}
+
+func (cc CardsController) SetCardCountInCollection(ctx *gin.Context) {
+	collectionId := ctx.Param("id")
+	scryfallId := ctx.Param("card_id")
+	var card models.Card
+	if err := ctx.ShouldBindJSON(&card); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	card.ScryfallID = scryfallId
+	respErr := cc.cardsService.SetCardCountInCollection(collectionId, &card)
+	if respErr != nil {
+		ctx.AbortWithStatusJSON(respErr.Status, respErr)
+		return
+	}
+
+	ctx.Status(http.StatusNoContent)
+}
+
+func (cc CardsController) DeleteCardFromCollection(ctx *gin.Context) {
+	collectionId := ctx.Param("id")
+	scryfallId := ctx.Param("card_id")
+
+	respErr := cc.cardsService.DeleteCardFromCollection(collectionId, &models.Card{ScryfallID: scryfallId})
+	if respErr != nil {
+		ctx.AbortWithStatusJSON(respErr.Status, respErr)
+		return
+	}
+
+	ctx.Status(http.StatusNoContent)
+}

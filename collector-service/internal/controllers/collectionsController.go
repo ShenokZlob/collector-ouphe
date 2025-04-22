@@ -12,7 +12,7 @@ type CollectionsController struct {
 }
 
 type CollectionsServicer interface {
-	AllCollections(userId string) ([]*models.Collection, *models.ResponseErr)
+	AllUsersCollections(userId string) ([]*models.UserCollectionRef, *models.ResponseErr)
 	CreateCollection(collection *models.Collection) (*models.Collection, *models.ResponseErr)
 	RenameCollection(collecion *models.Collection) *models.ResponseErr
 	DeleteCollection(collection *models.Collection) *models.ResponseErr
@@ -24,14 +24,14 @@ func NewCollectionsController(collectionsService CollectionsServicer) *Collectio
 	}
 }
 
-func (cc CollectionsController) AllCollections(ctx *gin.Context) {
+func (cc CollectionsController) AllUsersCollections(ctx *gin.Context) {
 	userId, respErr := getUserIDFromKeys(ctx)
 	if respErr != nil {
 		ctx.AbortWithStatusJSON(respErr.Status, respErr)
 		return
 	}
 
-	collections, respErr := cc.collectionsService.AllCollections(userId)
+	collections, respErr := cc.collectionsService.AllUsersCollections(userId)
 	if respErr != nil {
 		ctx.AbortWithStatusJSON(respErr.Status, respErr)
 		return

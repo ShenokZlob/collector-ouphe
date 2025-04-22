@@ -13,4 +13,27 @@ tasks:
   run:
     cmds:
       - go mod tidy
-      - go run cmd/main.go
+      - go run cmd/main.go --config=collector_ouphe
+  up:
+    desc: "Launch docker-compose and app"
+    cmds:
+      - echo "Launch docker-compose..."
+      - docker-compose up -d
+      - echo "Wait 5 seconds..."
+      - sleep 5
+      - echo "Launch app"
+      - |
+        if ! go run cmd/main.go --config=collector_ouphe; then
+          echo "App crush! Down containers..."
+          docker-compose down
+          exit 1
+        fi
+    silent: false
+  kill:
+    desc: "Down all service"
+    cmds:
+      - echo "Down docker-compose..."
+      - docker-compose down
+      - echo "Down app"
+      - pkill -f "go run cmd/main.go --config=collector_ouphe" || echo "The active proccess doesn't exist"
+    silent: false

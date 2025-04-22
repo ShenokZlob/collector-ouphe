@@ -3,8 +3,10 @@ package servers
 import (
 	"context"
 	"net/http"
+	"os"
 
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/controllers"
+	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/middleware"
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/repositories"
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/services"
 	"github.com/gin-gonic/gin"
@@ -27,15 +29,16 @@ func InitServer(config *viper.Viper, logger *zap.Logger, db *mongo.Client) *App 
 
 	// Init services
 	servAuth := services.NewAuthService(rep)
-	// servCollections := services.NewCollectionsService(rep)
-	// servCards := services.NewCardsService(rep)
+	servCollections := services.NewCollectionsService(rep)
+	servCards := services.NewCardsService(rep)
 
+	// Init controllers
 	ctrlAuth := controllers.NewAuthController(servAuth)
-	// ctrlCollections := controllers.NewCollectionsController(servCollections)
-	// ctrlCards := controllers.NewCardsController(servCards)
+	ctrlCollections := controllers.NewCollectionsController(servCollections)
+	ctrlCards := controllers.NewCardsController(servCards)
 
 	router := gin.Default()
-	// authMiddleware := middleware.JWTMiddleware(os.Getenv("JWT_SECRET"))
+	authMiddleware := middleware.JWTMiddleware(os.Getenv("JWT_SECRET"))
 
 	// public routes
 	public := router.Group("/")
@@ -45,17 +48,17 @@ func InitServer(config *viper.Viper, logger *zap.Logger, db *mongo.Client) *App 
 	}
 
 	// protected routes
-	// authorized := router.Group("/", authMiddleware)
+	authorized := router.Group("/", authMiddleware)
 	{
-		// authorized.GET("/collections", ctrlCollections.AllCollections)
-		// authorized.POST("/collections", ctrlCollections.CreateCollection)
-		// roauthorizeduter.PATCH("/collections/:id", ctrlCollections.RenameCollection)
-		// authorized.DELETE("/collections/:id", ctrlCollections.DeleteCollection)
+		authorized.GET("/collections", ctrlCollections.AllUsersCollections)
+		authorized.POST("/collections", ctrlCollections.CreateCollection)
+		authorized.PATCH("/collections/:id", ctrlCollections.RenameCollection)
+		authorized.DELETE("/collections/:id", ctrlCollections.DeleteCollection)
 
-		// authorized.GET("/collections/:id/cards", ctrlCards.AllCardsByCollection)
-		// authorized.POST("/collections/:id/cards", ctrlCards.AddCardToCollection)
-		// authorized.PATCH("/collections/:id/cards/:id", ctrlCards.SetCardCount)
-		// authorized.DELETE("/collections/:id/cards/:id", ctrlCards.DeleteCard)
+		authorized.GET("/collections/:id/cards", ctrlCards.ListCardsInCollection)
+		authorized.POST("/collections/:id/cards", ctrlCards.AddCardToCollection)
+		authorized.PATCH("/collections/:id/cards/:id", ctrlCards.SetCardCountInCollection)
+		authorized.DELETE("/collections/:id/cards/:id", ctrlCards.DeleteCardFromCollection)
 	}
 
 	server := &http.Server{
