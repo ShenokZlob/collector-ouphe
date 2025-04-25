@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/app"
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/config"
-	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/servers"
 	"github.com/joho/godotenv"
 
 	"go.uber.org/zap"
@@ -31,10 +31,10 @@ func main() {
 	cfg := config.InitConfig()
 
 	logger.Info("Init database")
-	db := servers.InitDataBase(cfg)
+	db := app.InitDataBase(cfg)
 
 	logger.Info("Init app server")
-	appServer := servers.InitServer(cfg, logger, db)
+	appServer := app.InitServer(cfg, logger, db)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()

@@ -15,6 +15,7 @@ func JWTMiddleware(secret string) gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 			return []byte(secret), nil
@@ -23,11 +24,13 @@ func JWTMiddleware(secret string) gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok || claims["user_id"] == nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
+
 		ctx.Set("userID", claims["user_id"].(string))
 		ctx.Next()
 	}
