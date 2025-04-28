@@ -45,6 +45,7 @@ func InitServer(config *viper.Viper, logger *zap.Logger, db *mongo.Client) *App 
 	{
 		public.POST("/register", ctrlAuth.Register)
 		public.GET("/user/telegram/:telegram_id", ctrlAuth.Who)
+		public.POST("/login", ctrlAuth.Login)
 	}
 
 	// protected routes

@@ -14,6 +14,7 @@ type AuthHandler struct {
 
 type AuthUsecase interface {
 	RegisterUser(telegramID int64, username, telegramNickname string) (string, error)
+	IsRegistered(telegramID int64) bool
 }
 
 func NewAuthHandler(usecase AuthUsecase) *AuthHandler {

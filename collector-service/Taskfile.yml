@@ -23,7 +23,7 @@ tasks:
       - sleep 5
       - echo "Launch app"
       - |
-        if ! go run cmd/main.go --config=collector_ouphe; then
+        if ! go run cmd/main.go --config=config; then
           echo "App crush! Down containers..."
           docker-compose down
           exit 1
@@ -35,5 +35,5 @@ tasks:
       - echo "Down docker-compose..."
       - docker-compose down
       - echo "Down app"
-      - pkill -f "go run cmd/main.go --config=collector_ouphe" || echo "The active proccess doesn't exist"
+      - pkill -f "go run cmd/main.go --config=config" || echo "The active proccess doesn't exist"
     silent: false

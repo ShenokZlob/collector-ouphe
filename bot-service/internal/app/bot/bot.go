@@ -4,6 +4,7 @@ import (
 	"context"
 
 	authHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/handler"
+	authUsecase "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/usecase"
 	"github.com/go-telegram/bot"
 )
 
@@ -13,6 +14,11 @@ type AppBot struct {
 }
 
 func NewAppBot(token string, collectorURL string) (*AppBot, error) {
+	// Auth
+	authUsecase := authUsecase.NewAuthUsecase(collectorURL)
+	authHandler := authHandler.NewAuthHandler(authUsecase)
+
+	// Bot options
 	opts := []bot.Option{
 		bot.WithMiddlewares(authHandler.RegistrationMiddleware),
 	}
@@ -21,6 +27,9 @@ func NewAppBot(token string, collectorURL string) (*AppBot, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Initialize router
+	b.RegisterHandler(bot.HandlerTypeMessageText, "/register", bot.MatchTypeExact, authHandler.HandleRegister)
 
 	return &AppBot{
 		bot:          b,

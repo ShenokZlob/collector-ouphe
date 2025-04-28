@@ -17,12 +17,13 @@ type AuthController struct {
 type AuthServicer interface {
 	Register(*models.User) (*models.User, *models.ResponseErr)
 	Who(userTelegramId string) (*models.User, *models.ResponseErr)
+	Login(*models.User) *models.ResponseErr
 }
 
 type UserResponse struct {
 	ID               string `json:"id"`
 	TelegramID       int64  `json:"telegram_id"`
-	Name             string `json:"name"`
+	Username         string `json:"username"`
 	TelegramNickname string `json:"telegram_nickname,omitempty"`
 }
 
@@ -55,7 +56,7 @@ func (ac AuthController) Register(ctx *gin.Context) {
 		"user": UserResponse{
 			ID:               user.ID,
 			TelegramID:       createdUser.TelegramID,
-			Name:             createdUser.Name,
+			Username:         createdUser.Username,
 			TelegramNickname: createdUser.TelegramNickname,
 		},
 		"token": token,
@@ -68,17 +69,29 @@ func (ac AuthController) Who(ctx *gin.Context) {
 		ctx.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
+
 	user, respErr := ac.authService.Who(userTelegramId)
 	if respErr != nil {
 		ctx.AbortWithStatusJSON(respErr.Status, respErr)
 		return
 	}
+
 	ctx.JSON(http.StatusOK, UserResponse{
 		ID:               user.ID,
 		TelegramID:       user.TelegramID,
-		Name:             user.Name,
+		Username:         user.Username,
 		TelegramNickname: user.TelegramNickname,
 	})
+}
+
+func (ac AuthController) Login(ctx *gin.Context) {
+	var user models.User
+	if err := ctx.ShouldBindJSON(&user); err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+
+	ac.authService.Login(&user)
 }
 
 func generateToken(user *models.User) (string, error) {

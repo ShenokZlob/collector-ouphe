@@ -14,8 +14,13 @@ func (h *AuthHandler) RegistrationMiddleware(next bot.HandlerFunc) bot.HandlerFu
 			return
 		}
 
+		if update.Message.Text == "/register" {
+			next(ctx, b, update)
+			return
+		}
+
 		user := update.Message.From
-		if ok := IsRegistered(user.ID); !ok {
+		if ok := h.Usecase.IsRegistered(user.ID); !ok {
 			b.SendMessage(ctx, &bot.SendMessageParams{
 				ChatID: update.Message.Chat.ID,
 				Text:   "Вы не зарегистрированы. Пожалуйста, зарегистрируйтесь.",

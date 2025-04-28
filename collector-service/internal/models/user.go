@@ -10,7 +10,7 @@ type User struct {
 	ID               string               `bson:"-" json:"id"`
 	ObjectID         bson.ObjectID        `bson:"_id" json:"-"`
 	TelegramID       int64                `bson:"telegram_id" json:"telegram_id"`
-	Name             string               `bson:"name" json:"name"`
+	Username         string               `bson:"username" json:"username"`
 	TelegramNickname string               `bson:"telegram_nickname,omitempty" json:"telegram_nickname,omitempty"`
 	Collections      []*UserCollectionRef `bson:"collections,omitempty" json:"collections,omitempty"`
 	CreatedAt        time.Time            `bson:"-" json:"created_at"`

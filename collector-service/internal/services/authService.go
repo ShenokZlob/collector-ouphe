@@ -58,10 +58,10 @@ func validateUser(user *models.User) *models.ResponseErr {
 			Message: "Invalid user telegram ID",
 		}
 	}
-	if user.Name == "" {
+	if user.Username == "" {
 		return &models.ResponseErr{
 			Status:  http.StatusBadRequest,
-			Message: "Invalid user name",
+			Message: "Invalid user username",
 		}
 	}
 	return nil

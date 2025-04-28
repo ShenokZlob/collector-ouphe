@@ -11,11 +11,13 @@ import (
 
 type authUsecaseImpl struct {
 	collectorURL string
+	localStorage *inMemoryStorage
 }
 
 func NewAuthUsecase(collectorURL string) *authUsecaseImpl {
 	return &authUsecaseImpl{
 		collectorURL: collectorURL,
+		localStorage: newInMemoryStorage(),
 	}
 }
 
@@ -37,7 +39,7 @@ func (a *authUsecaseImpl) RegisterUser(telegramID int64, username, telegramNickn
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusCreated {
 		return "", fmt.Errorf("failed to register user, status code: %d", resp.StatusCode)
 	}
 
@@ -46,5 +48,21 @@ func (a *authUsecaseImpl) RegisterUser(telegramID int64, username, telegramNickn
 		return "", err
 	}
 
+	// Store the token in local storage
+	a.localStorage.AddUser(telegramID, res.Token)
+
 	return res.Token, nil
+}
+
+func (a *authUsecaseImpl) IsRegistered(telegramID int64) bool {
+	// Check in local struct
+	if _, ok := a.localStorage.GetUser(telegramID); ok {
+		return true
+	}
+
+	// Check in the database (Redis)
+
+	// Check in the collector service
+
+	return false
 }

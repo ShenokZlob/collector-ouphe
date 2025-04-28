@@ -21,9 +21,6 @@ func main() {
 		log.Fatalf("failed to create bot: %v", err)
 	}
 
-	log.Println("Initializing router...")
-	appbot.InitRouter(app)
-
 	log.Println("Runing app...")
 	app.Run(ctx)
 }
