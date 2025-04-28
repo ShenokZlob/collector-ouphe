@@ -51,6 +51,35 @@ func (as AuthService) Who(telegramId string) (*models.User, *models.ResponseErr)
 	return user, nil
 }
 
+func (as AuthService) Login(user *models.User) *models.ResponseErr {
+	respErr := validateUser(user)
+	if respErr != nil {
+		return respErr
+	}
+
+	// Check if user exists in the database
+	existingUser, respErr := as.authRepository.FindUserByTelegramID(user.TelegramID)
+	if respErr != nil {
+		return respErr
+	}
+
+	if existingUser == nil {
+		return &models.ResponseErr{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalid credentials",
+		}
+	}
+
+	if existingUser.Username != user.Username {
+		return &models.ResponseErr{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalid credentials",
+		}
+	}
+
+	return nil
+}
+
 func validateUser(user *models.User) *models.ResponseErr {
 	if user.TelegramID == 0 {
 		return &models.ResponseErr{

@@ -91,7 +91,21 @@ func (ac AuthController) Login(ctx *gin.Context) {
 		return
 	}
 
-	ac.authService.Login(&user)
+	respErr := ac.authService.Login(&user)
+	if respErr != nil {
+		ctx.AbortWithStatusJSON(respErr.Status, respErr)
+		return
+	}
+
+	token, err := generateToken(&user)
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"token": token,
+	})
 }
 
 func generateToken(user *models.User) (string, error) {

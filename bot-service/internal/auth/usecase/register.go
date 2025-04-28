@@ -63,6 +63,27 @@ func (a *authUsecaseImpl) IsRegistered(telegramID int64) bool {
 	// Check in the database (Redis)
 
 	// Check in the collector service
+	reqData := dto.RegisterRequest{
+		TelegramID: telegramID,
+	}
+
+	body, err := json.Marshal(reqData)
+	if err != nil {
+		return false
+	}
+
+	resp, err := http.Post(a.collectorURL+"/login", "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		var res dto.RegisterResponse
+		if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+			return false
+		}
+	}
 
 	return false
 }

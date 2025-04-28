@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -27,6 +28,11 @@ func JWTMiddleware(secret string) gin.HandlerFunc {
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok || claims["user_id"] == nil {
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		if exp, ok := claims["exp"].(float64); !ok || int64(exp) < time.Now().Unix() {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
