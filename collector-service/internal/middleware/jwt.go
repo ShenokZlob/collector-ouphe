@@ -5,11 +5,25 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func JWTMiddleware(secret string) gin.HandlerFunc {
+// Needs initialization logger
+type JWTMiddleware struct {
+	secret string
+	logger logger.Logger
+}
+
+func NewJWTMiddleware(secret string, logger logger.Logger) *JWTMiddleware {
+	return &JWTMiddleware{
+		secret: secret,
+		logger: logger,
+	}
+}
+
+func (m *JWTMiddleware) Authorization() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
@@ -19,7 +33,7 @@ func JWTMiddleware(secret string) gin.HandlerFunc {
 
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
 		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-			return []byte(secret), nil
+			return []byte(m.secret), nil
 		})
 		if err != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)

@@ -4,11 +4,13 @@ import (
 	"net/http"
 
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/models"
+	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/gin-gonic/gin"
 )
 
 type CollectionsController struct {
 	collectionsService CollectionsServicer
+	logger             logger.Logger
 }
 
 type CollectionsServicer interface {
@@ -18,9 +20,10 @@ type CollectionsServicer interface {
 	DeleteCollection(collection *models.Collection) *models.ResponseErr
 }
 
-func NewCollectionsController(collectionsService CollectionsServicer) *CollectionsController {
+func NewCollectionsController(collectionsService CollectionsServicer, logger logger.Logger) *CollectionsController {
 	return &CollectionsController{
 		collectionsService: collectionsService,
+		logger:             logger,
 	}
 }
 

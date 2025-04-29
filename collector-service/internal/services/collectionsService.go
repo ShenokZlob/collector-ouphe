@@ -1,9 +1,13 @@
 package services
 
-import "github.com/ShenokZlob/collector-ouphe/collector-service/internal/models"
+import (
+	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/models"
+	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
+)
 
 type CollectionsService struct {
 	collectionRepository CollectionsRepositorer
+	logger               logger.Logger
 }
 
 type CollectionsRepositorer interface {
@@ -13,9 +17,10 @@ type CollectionsRepositorer interface {
 	DeleteCollection(collection *models.Collection) *models.ResponseErr
 }
 
-func NewCollectionsService(collectionRepository CollectionsRepositorer) *CollectionsService {
+func NewCollectionsService(collectionRepository CollectionsRepositorer, logger logger.Logger) *CollectionsService {
 	return &CollectionsService{
 		collectionRepository: collectionRepository,
+		logger:               logger,
 	}
 }
 

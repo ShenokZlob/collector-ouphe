@@ -6,12 +6,14 @@ import (
 	"time"
 
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/models"
+	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type AuthController struct {
 	authService AuthServicer
+	logger      logger.Logger
 }
 
 type AuthServicer interface {
@@ -27,9 +29,10 @@ type UserResponse struct {
 	TelegramNickname string `json:"telegram_nickname,omitempty"`
 }
 
-func NewAuthController(authService AuthServicer) *AuthController {
+func NewAuthController(authService AuthServicer, logger logger.Logger) *AuthController {
 	return &AuthController{
 		authService: authService,
+		logger:      logger.With(),
 	}
 }
 

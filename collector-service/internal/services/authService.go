@@ -6,10 +6,12 @@ import (
 	"strconv"
 
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/models"
+	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 )
 
 type AuthService struct {
 	authRepository AuthRepositorer
+	logger         logger.Logger
 }
 
 type AuthRepositorer interface {
@@ -17,9 +19,10 @@ type AuthRepositorer interface {
 	FindUserByTelegramID(telegramId int64) (*models.User, *models.ResponseErr)
 }
 
-func NewAuthService(authRepository AuthRepositorer) *AuthService {
+func NewAuthService(authRepository AuthRepositorer, logger logger.Logger) *AuthService {
 	return &AuthService{
 		authRepository: authRepository,
+		logger:         logger,
 	}
 }
 

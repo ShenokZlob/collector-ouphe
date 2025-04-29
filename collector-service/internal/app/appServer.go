@@ -9,38 +9,41 @@ import (
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/middleware"
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/repositories"
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/services"
+	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.uber.org/zap"
 )
 
 type App struct {
 	host   string
-	logger *zap.Logger
+	logger logger.Logger
 	server *http.Server
 }
 
-func InitServer(config *viper.Viper, logger *zap.Logger, db *mongo.Client) *App {
+func InitServer(config *viper.Viper, logger logger.Logger, db *mongo.Client) *App {
 	host := config.GetString("server_http.host")
 
 	// Init repository
 	rep := repositories.NewRepository(db)
 
 	// Init services
-	servAuth := services.NewAuthService(rep)
-	servCollections := services.NewCollectionsService(rep)
-	servCards := services.NewCardsService(rep)
+	servAuth := services.NewAuthService(rep, logger)
+	servCollections := services.NewCollectionsService(rep, logger)
+	servCards := services.NewCardsService(rep, logger)
 
 	// Init controllers
-	ctrlAuth := controllers.NewAuthController(servAuth)
-	ctrlCollections := controllers.NewCollectionsController(servCollections)
-	ctrlCards := controllers.NewCardsController(servCards)
+	ctrlAuth := controllers.NewAuthController(servAuth, logger)
+	ctrlCollections := controllers.NewCollectionsController(servCollections, logger)
+	ctrlCards := controllers.NewCardsController(servCards, logger)
 
 	router := gin.Default()
-	authMiddleware := middleware.JWTMiddleware(os.Getenv("JWT_SECRET"))
 
-	// public routes
+	// Middleware
+	mid := middleware.NewJWTMiddleware(os.Getenv("JWT_SECRET"), logger)
+	authMiddleware := mid.Authorization()
+
+	// Public routes
 	public := router.Group("/")
 	{
 		public.POST("/register", ctrlAuth.Register)
@@ -48,7 +51,7 @@ func InitServer(config *viper.Viper, logger *zap.Logger, db *mongo.Client) *App 
 		public.POST("/login", ctrlAuth.Login)
 	}
 
-	// protected routes
+	// Protected routes
 	authorized := router.Group("/", authMiddleware)
 	{
 		authorized.GET("/collections", ctrlCollections.AllUsersCollections)
@@ -75,15 +78,15 @@ func InitServer(config *viper.Viper, logger *zap.Logger, db *mongo.Client) *App 
 }
 
 func (a *App) Run() {
-	a.logger.Info("Running server", zap.String("host", a.host))
+	a.logger.Info("Running server", logger.Field{Key: "host", String: a.host})
 	if err := a.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		a.logger.Fatal("Something wrong...", zap.Error(err))
+		a.logger.Error("ListenAndServe", logger.Field{Key: "error", String: err.Error()})
 	}
 }
 
 func (a *App) Stop(ctx context.Context) {
-	a.logger.Info("Stopping server", zap.String("host", a.host))
+	a.logger.Info("Stopping server", logger.Field{Key: "host", String: a.host})
 	if err := a.server.Shutdown(ctx); err != nil {
-		a.logger.Fatal("Server Shutdown:", zap.Error(err))
+		a.logger.Error("Server Shutdown Failed", logger.Field{Key: "error", String: err.Error()})
 	}
 }

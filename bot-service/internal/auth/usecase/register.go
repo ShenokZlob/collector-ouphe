@@ -60,7 +60,7 @@ func (a *authUsecaseImpl) IsRegistered(telegramID int64) bool {
 		return true
 	}
 
-	// Check in the database (Redis)
+	// TODO: Check in the database (Redis)
 
 	// Check in the collector service
 	reqData := dto.RegisterRequest{
