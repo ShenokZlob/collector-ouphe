@@ -1,0 +1,22 @@
+
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /app/bot-service
+
+COPY bot-service/go.mod bot-service/go.sum ./
+RUN go mod download
+
+
+COPY bot-service/ ./
+COPY pkg/ ../pkg/
+
+RUN go build -o bot-service cmd/main.go
+
+
+FROM alpine:latest
+
+WORKDIR /root/
+
+COPY --from=builder /app/bot-service/bot-service .
+
+CMD ["./bot-service"]

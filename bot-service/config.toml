@@ -1,4 +1,0 @@
-# collector-service 
-[collector-service]
-host = "localhost"
-port = 8080

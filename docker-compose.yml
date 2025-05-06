@@ -1,6 +1,5 @@
-version: '3.8'
-
 services:
+  # MongoDB (для collector-service)
   mongo:
     image: mongo
     restart: always
@@ -12,6 +11,7 @@ services:
     volumes:
       - mongo_data:/data/db
 
+  # Mongo Express (опционально)
   mongo-express:
     image: mongo-express
     restart: always
@@ -24,3 +24,28 @@ services:
       ME_CONFIG_BASICAUTH: false
     depends_on:
       - mongo
+
+  # Collector Service
+  collector:
+    build:
+      context: .
+      dockerfile: ./collector-service/Dockerfile
+    restart: always
+    depends_on:
+      - mongo
+    environment:
+      - APP_CONFIG=${APP_CONFIG}
+      - JWT_SECRET=${JWT_SECRET}
+
+  # Bot Service
+  bot:
+    build:
+      context: .
+      dockerfile: ./bot-service/Dockerfile
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - COLLECTOR_URL=${COLLECTOR_URL}
+    restart: always
+
+volumes:
+  mongo_data:

@@ -2,14 +2,15 @@ package handler
 
 import (
 	"context"
-	"log"
 
+	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
 
 type AuthHandler struct {
 	Usecase AuthUsecase
+	log     logger.Logger
 }
 
 type AuthUsecase interface {
@@ -17,9 +18,11 @@ type AuthUsecase interface {
 	IsRegistered(telegramID int64) bool
 }
 
-func NewAuthHandler(usecase AuthUsecase) *AuthHandler {
+func NewAuthHandler(usecase AuthUsecase, log logger.Logger) *AuthHandler {
 	return &AuthHandler{
 		Usecase: usecase,
+		// log:     log.With(logger.Field{Key: "handler", String: "auth"}),
+		log: log,
 	}
 }
 
@@ -28,7 +31,7 @@ func (h *AuthHandler) HandleRegister(ctx context.Context, b *bot.Bot, update *mo
 
 	token, err := h.Usecase.RegisterUser(user.ID, user.Username, user.FirstName)
 	if err != nil {
-		log.Println("registration error:", err)
+		h.log.Error("Failed to register user", logger.Error(err))
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
 			Text:   "Ошибка регистрации. Попробуйте позже.",

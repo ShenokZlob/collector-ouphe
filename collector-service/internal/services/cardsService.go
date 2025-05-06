@@ -9,7 +9,7 @@ import (
 
 type CardsService struct {
 	cardsRepository CardsRepositorer
-	logger          logger.Logger
+	log             logger.Logger
 }
 
 type CardsRepositorer interface {
@@ -19,10 +19,10 @@ type CardsRepositorer interface {
 	DeleteCardFromCollection(collectionId string, card *models.Card) *models.ResponseErr
 }
 
-func NewCardsService(cardsRepository CardsRepositorer, logger logger.Logger) *CardsService {
+func NewCardsService(cardsRepository CardsRepositorer, log logger.Logger) *CardsService {
 	return &CardsService{
 		cardsRepository: cardsRepository,
-		logger:          logger,
+		log:             log.With(logger.String("service", "cards")),
 	}
 }
 

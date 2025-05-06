@@ -13,7 +13,7 @@ import (
 
 type AuthController struct {
 	authService AuthServicer
-	logger      logger.Logger
+	log         logger.Logger
 }
 
 type AuthServicer interface {
@@ -29,16 +29,19 @@ type UserResponse struct {
 	TelegramNickname string `json:"telegram_nickname,omitempty"`
 }
 
-func NewAuthController(authService AuthServicer, logger logger.Logger) *AuthController {
+func NewAuthController(authService AuthServicer, log logger.Logger) *AuthController {
 	return &AuthController{
 		authService: authService,
-		logger:      logger.With(),
+		log:         log.With(logger.String("controller", "auth")),
 	}
 }
 
 func (ac AuthController) Register(ctx *gin.Context) {
+	ac.log.With(logger.String("method", "Register")).Info("registering user")
+
 	var user models.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
+		ac.log.Error("failed to bind json", logger.String("error", err.Error()))
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -51,6 +54,7 @@ func (ac AuthController) Register(ctx *gin.Context) {
 
 	token, err := generateToken(createdUser)
 	if err != nil {
+		ac.log.Error("failed to generate token", logger.String("error", err.Error()))
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -67,8 +71,11 @@ func (ac AuthController) Register(ctx *gin.Context) {
 }
 
 func (ac AuthController) Who(ctx *gin.Context) {
+	ac.log.With(logger.String("method", "Who")).Info("getting user by telegram ID")
+
 	userTelegramId := ctx.Param("telegram_id")
 	if userTelegramId == "" {
+		ac.log.Error("telegram ID is empty", logger.String("error", "telegram ID is empty"))
 		ctx.AbortWithStatus(http.StatusBadRequest)
 		return
 	}
@@ -88,8 +95,11 @@ func (ac AuthController) Who(ctx *gin.Context) {
 }
 
 func (ac AuthController) Login(ctx *gin.Context) {
+	ac.log.With(logger.String("method", "Login")).Info("logging in user")
+
 	var user models.User
 	if err := ctx.ShouldBindJSON(&user); err != nil {
+		ac.log.Error("failed to bind json", logger.String("error", err.Error()))
 		ctx.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -102,6 +112,7 @@ func (ac AuthController) Login(ctx *gin.Context) {
 
 	token, err := generateToken(&user)
 	if err != nil {
+		ac.log.Error("failed to generate token", logger.String("error", err.Error()))
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

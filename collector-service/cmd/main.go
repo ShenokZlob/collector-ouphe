@@ -13,7 +13,12 @@ import (
 )
 
 func main() {
-	log := logger.NewZapLogger(false)
+	log, err := logger.NewZapLogger(false)
+	if err != nil {
+		panic(err)
+	}
+	defer log.Sync()
+
 	log.Info("Starting collector service")
 
 	log.Info("Read config")

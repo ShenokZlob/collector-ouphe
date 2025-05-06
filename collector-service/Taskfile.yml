@@ -1,26 +1,18 @@
-# https://taskfile.dev
-
 version: "3"
 
-vars:
-  GREETING: Hello, World!
-
 tasks:
-  default:
-    cmds:
-      - echo "{{.GREETING}}"
-    silent: true
   run:
+    desc: "Run collector-service"
     cmds:
       - go mod tidy
-      - go run cmd/main.go --config=collector_ouphe
+      - go run cmd/main.go --config=config
   up:
     desc: "Launch docker-compose and app"
     cmds:
       - echo "Launch docker-compose..."
       - docker-compose up -d
-      - echo "Wait 5 seconds..."
-      - sleep 5
+      - echo "Wait 3 seconds..."
+      - sleep 3
       - echo "Launch app"
       - |
         if ! go run cmd/main.go --config=config; then

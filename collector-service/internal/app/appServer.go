@@ -17,30 +17,30 @@ import (
 
 type App struct {
 	host   string
-	logger logger.Logger
+	log    logger.Logger
 	server *http.Server
 }
 
-func InitServer(config *viper.Viper, logger logger.Logger, db *mongo.Client) *App {
+func InitServer(config *viper.Viper, log logger.Logger, db *mongo.Client) *App {
 	host := config.GetString("server_http.host")
 
 	// Init repository
 	rep := repositories.NewRepository(db)
 
 	// Init services
-	servAuth := services.NewAuthService(rep, logger)
-	servCollections := services.NewCollectionsService(rep, logger)
-	servCards := services.NewCardsService(rep, logger)
+	servAuth := services.NewAuthService(rep, log)
+	servCollections := services.NewCollectionsService(rep, log)
+	servCards := services.NewCardsService(rep, log)
 
 	// Init controllers
-	ctrlAuth := controllers.NewAuthController(servAuth, logger)
-	ctrlCollections := controllers.NewCollectionsController(servCollections, logger)
-	ctrlCards := controllers.NewCardsController(servCards, logger)
+	ctrlAuth := controllers.NewAuthController(servAuth, log)
+	ctrlCollections := controllers.NewCollectionsController(servCollections, log)
+	ctrlCards := controllers.NewCardsController(servCards, log)
 
 	router := gin.Default()
 
 	// Middleware
-	mid := middleware.NewJWTMiddleware(os.Getenv("JWT_SECRET"), logger)
+	mid := middleware.NewJWTMiddleware(os.Getenv("JWT_SECRET"), log)
 	authMiddleware := mid.Authorization()
 
 	// Public routes
@@ -72,21 +72,21 @@ func InitServer(config *viper.Viper, logger logger.Logger, db *mongo.Client) *Ap
 
 	return &App{
 		host:   host,
-		logger: logger,
+		log:    log,
 		server: server,
 	}
 }
 
 func (a *App) Run() {
-	a.logger.Info("Running server", logger.Field{Key: "host", String: a.host})
+	a.log.Info("Running server", logger.String("host", a.host))
 	if err := a.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		a.logger.Error("ListenAndServe", logger.Field{Key: "error", String: err.Error()})
+		a.log.Error("ListenAndServe", logger.Error(err))
 	}
 }
 
 func (a *App) Stop(ctx context.Context) {
-	a.logger.Info("Stopping server", logger.Field{Key: "host", String: a.host})
+	a.log.Info("Stopping server", logger.String("host", a.host))
 	if err := a.server.Shutdown(ctx); err != nil {
-		a.logger.Error("Server Shutdown Failed", logger.Field{Key: "error", String: err.Error()})
+		a.log.Error("Server Shutdown Failed", logger.Error(err))
 	}
 }

@@ -1,0 +1,35 @@
+# Taskfile.yml в корне проекта
+version: "3"
+
+tasks:
+  docker-build-collector:
+    decs: "Build collector-service image"
+    cmds:
+      - docker build -f collector-service/Dockerfile -t collector-service:latest .
+      - docker image prune -f
+
+  docker-run-collector:
+    decs: "Run collector-service container"
+    cmds:
+      - docker run --rm --name collector-service-app --env-file .env collector-service:latest
+
+  docker-build-bot:
+    decs: "Build bot-service image"
+    cmds:
+      - docker build -f bot-service/Dockerfile -t bot-service:latest .
+      - docker image prune -f
+
+  docker-run-bot:
+    decs: "Run bot-service container"
+    cmds:
+      - docker run --rm --name bot-service-app --env-file .env bot-service:latest
+
+  run:
+    decs: "Launch and run all services"
+    cmds:
+      - docker-compose up -d
+
+  shutdown:
+    decs: "Shutdown all services"
+    cmds:
+      - docker-compose down

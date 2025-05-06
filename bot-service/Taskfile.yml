@@ -1,16 +1,26 @@
-# https://taskfile.dev
-
 version: "3"
 
-vars:
-  GREETING: Hello, World!
-
 tasks:
-  default:
-    cmds:
-      - echo "{{.GREETING}}"
-    silent: true
   run:
+    desc: "Run the bot locally with environment variables"
     cmds:
       - go mod tidy
-      - go run cmd/main.go
+      - go run ./cmd/main.go
+    dir: .
+
+  docker-build:
+    desc: "Build Docker image for bot-service"
+    cmds:
+      - docker build --rm . -t bot-service:latest
+      - docker image prune -f
+
+  docker-run:
+    desc: "Run bot-service container with env from .env"
+    cmds:
+      - docker run --rm . --name bot-service-app --env-file .env bot-service:latest
+
+  docker-rebuild:
+    decs: "Rebuild image and run container"
+    cmds:
+      - task docker-build
+      - task docker-run

@@ -10,7 +10,7 @@ import (
 
 type CardsController struct {
 	cardsService CardsServicer
-	logger       logger.Logger
+	log          logger.Logger
 }
 
 type CardsServicer interface {
@@ -20,10 +20,10 @@ type CardsServicer interface {
 	DeleteCardFromCollection(collectionId string, card *models.Card) *models.ResponseErr
 }
 
-func NewCardsController(cardsService CardsServicer, logger logger.Logger) *CardsController {
+func NewCardsController(cardsService CardsServicer, log logger.Logger) *CardsController {
 	return &CardsController{
 		cardsService: cardsService,
-		logger:       logger,
+		log:          log.With(logger.String("controller", "cards")),
 	}
 }
 

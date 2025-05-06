@@ -8,32 +8,64 @@ type Logger interface {
 	Info(msg string, fields ...Field)
 	Error(msg string, fields ...Field)
 	With(fields ...Field) Logger
+	Sync() error
 }
-
-type Field = zap.Field
 
 type zapLogger struct {
 	l *zap.Logger
 }
 
-func NewZapLogger(prod bool) Logger {
-	var l *zap.Logger
-	if prod {
-		l, _ = zap.NewProduction()
+func NewZapLogger(isProduction bool) (Logger, error) {
+	var log *zap.Logger
+	var err error
+
+	if isProduction {
+		log, err = zap.NewProduction()
 	} else {
-		l, _ = zap.NewDevelopment()
+		log, err = zap.NewDevelopment()
 	}
-	return &zapLogger{l: l}
+	if err != nil {
+		return nil, err
+	}
+	return &zapLogger{l: log}, nil
 }
 
-func (z *zapLogger) Info(msg string, fields ...Field) {
-	z.l.Info(msg, fields...)
+func (zl *zapLogger) Info(msg string, fields ...Field) {
+	zl.l.Info(msg, toZapFields(fields)...)
 }
 
-func (z *zapLogger) Error(msg string, fields ...Field) {
-	z.l.Error(msg, fields...)
+func (zl *zapLogger) Error(msg string, fields ...Field) {
+	zl.l.Error(msg, toZapFields(fields)...)
 }
 
-func (z *zapLogger) With(fields ...Field) Logger {
-	return &zapLogger{l: z.l.With(fields...)}
+func (zl *zapLogger) With(fields ...Field) Logger {
+	return &zapLogger{l: zl.l.With(toZapFields(fields)...)}
+}
+
+func (zl *zapLogger) Sync() error {
+	return zl.l.Sync()
+}
+
+type Field struct {
+	zapField zap.Field
+}
+
+func String(key, value string) Field {
+	return Field{zapField: zap.String(key, value)}
+}
+
+func Error(err error) Field {
+	return Field{zapField: zap.Error(err)}
+}
+
+func Int(key string, value int) Field {
+	return Field{zapField: zap.Int(key, value)}
+}
+
+func toZapFields(fields []Field) []zap.Field {
+	zapFields := make([]zap.Field, len(fields))
+	for i, f := range fields {
+		zapFields[i] = f.zapField
+	}
+	return zapFields
 }

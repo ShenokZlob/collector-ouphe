@@ -7,7 +7,7 @@ import (
 
 type CollectionsService struct {
 	collectionRepository CollectionsRepositorer
-	logger               logger.Logger
+	log                  logger.Logger
 }
 
 type CollectionsRepositorer interface {
@@ -17,10 +17,10 @@ type CollectionsRepositorer interface {
 	DeleteCollection(collection *models.Collection) *models.ResponseErr
 }
 
-func NewCollectionsService(collectionRepository CollectionsRepositorer, logger logger.Logger) *CollectionsService {
+func NewCollectionsService(collectionRepository CollectionsRepositorer, log logger.Logger) *CollectionsService {
 	return &CollectionsService{
 		collectionRepository: collectionRepository,
-		logger:               logger,
+		log:                  log.With(logger.String("service", "collections")),
 	}
 }
 
