@@ -5,6 +5,7 @@ import (
 
 	authHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/handler"
 	authUsecase "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/usecase"
+	"github.com/ShenokZlob/collector-ouphe/pkg/collectorclient"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -18,7 +19,11 @@ type AppBot struct {
 
 func NewAppBot(token string, collectorURL string, log logger.Logger) (*AppBot, error) {
 	// Auth
-	authUsecase := authUsecase.NewAuthUsecase(collectorURL, log)
+	collectorClient := &collectorclient.HTTPCollectorClient{
+		URL: collectorURL,
+		Log: log,
+	}
+	authUsecase := authUsecase.NewAuthUsecase(log, collectorClient)
 	authHandler := authHandler.NewAuthHandler(authUsecase, log)
 
 	// Bot options
