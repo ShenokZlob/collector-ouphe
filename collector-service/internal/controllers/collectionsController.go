@@ -65,7 +65,15 @@ func (cc CollectionsController) CreateCollection(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, createdColl)
+	ctx.JSON(http.StatusCreated, struct {
+		ID     string `json:"if"`
+		UserID string `json:"user_id"`
+		Name   string `json:"name"`
+	}{
+		ID:     createdColl.ID,
+		UserID: createdColl.UserID,
+		Name:   collection.Name,
+	})
 }
 
 // хз как правильно реализовать

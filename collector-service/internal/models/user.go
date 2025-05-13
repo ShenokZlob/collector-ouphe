@@ -7,14 +7,15 @@ import (
 )
 
 type User struct {
-	ID               string               `bson:"-" json:"id"`
-	ObjectID         bson.ObjectID        `bson:"_id" json:"-"`
-	TelegramID       int64                `bson:"telegram_id" json:"telegram_id"`
-	Username         string               `bson:"username" json:"username"`
-	TelegramNickname string               `bson:"telegram_nickname,omitempty" json:"telegram_nickname,omitempty"`
-	Collections      []*UserCollectionRef `bson:"collections,omitempty" json:"collections,omitempty"`
-	CreatedAt        time.Time            `bson:"-" json:"created_at"`
-	UpdatedAt        time.Time            `bson:"-" json:"updated_at"`
+	ID          string               `bson:"-" json:"id"`
+	ObjectID    bson.ObjectID        `bson:"_id" json:"-"`
+	TelegramID  int64                `bson:"telegram_id" json:"telegram_id"`
+	FirstName   string               `bson:"first_name" json:"first_name"`
+	LastName    string               `bson:"last_name,omitempty" json:"last_name,omitempty"`
+	Username    string               `bson:"username,omitempty" json:"username,omitempty"`
+	Collections []*UserCollectionRef `bson:"collections,omitempty" json:"collections,omitempty"`
+	CreatedAt   time.Time            `bson:"-" json:"created_at"`
+	UpdatedAt   time.Time            `bson:"-" json:"updated_at"`
 }
 
 type UserCollectionRef struct {

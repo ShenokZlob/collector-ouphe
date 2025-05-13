@@ -5,7 +5,8 @@ type CheckUserRequest struct {
 }
 
 type CheckUserResponse struct {
-	Success bool `json:"success"`
+	Token   string `json:"token"`
+	Success bool   `json:"success"`
 }
 
 type RegisterRequest struct {

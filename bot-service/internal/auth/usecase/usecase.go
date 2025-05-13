@@ -47,11 +47,13 @@ func (a *authUsecaseImpl) RegisterUser(user dto.UserInfo) (string, error) {
 	return reqData.Token, nil
 }
 
-func (a *authUsecaseImpl) IsRegistered(telegramID int64) bool {
+// IsRegistered return token JWT (if it exist)
+func (a *authUsecaseImpl) IsRegistered(telegramID int64) (string, bool) {
 	// Check in local struct
-	if _, ok := a.localStorage.GetUser(telegramID); ok {
+	token, ok := a.localStorage.GetUser(telegramID)
+	if ok {
 		a.log.Info("User found in local storage", logger.String("telegram_id", fmt.Sprint(telegramID)))
-		return true
+		return token, ok
 	}
 
 	// TODO: Check in the database (Redis)
@@ -62,8 +64,8 @@ func (a *authUsecaseImpl) IsRegistered(telegramID int64) bool {
 	})
 	if err != nil {
 		a.log.Error("Failed to check registration in collector service", logger.Error(err))
-		return false
+		return "", false
 	}
 
-	return respData.Success
+	return respData.Token, respData.Success
 }

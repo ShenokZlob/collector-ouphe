@@ -23,10 +23,10 @@ type AuthServicer interface {
 }
 
 type UserResponse struct {
-	ID               string `json:"id"`
-	TelegramID       int64  `json:"telegram_id"`
-	Username         string `json:"username"`
-	TelegramNickname string `json:"telegram_nickname,omitempty"`
+	ID         string `json:"id"`
+	TelegramID int64  `json:"telegram_id"`
+	FirstName  string `json:"first_name"`
+	Username   string `json:"username,omitempty"`
 }
 
 func NewAuthController(authService AuthServicer, log logger.Logger) *AuthController {
@@ -61,10 +61,9 @@ func (ac AuthController) Register(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusCreated, gin.H{
 		"user": UserResponse{
-			ID:               user.ID,
-			TelegramID:       createdUser.TelegramID,
-			Username:         createdUser.Username,
-			TelegramNickname: createdUser.TelegramNickname,
+			ID:         user.ID,
+			TelegramID: createdUser.TelegramID,
+			Username:   createdUser.Username,
 		},
 		"token": token,
 	})
@@ -87,10 +86,9 @@ func (ac AuthController) Who(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, UserResponse{
-		ID:               user.ID,
-		TelegramID:       user.TelegramID,
-		Username:         user.Username,
-		TelegramNickname: user.TelegramNickname,
+		ID:         user.ID,
+		TelegramID: user.TelegramID,
+		Username:   user.Username,
 	})
 }
 

@@ -5,6 +5,7 @@ import (
 
 	authHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/handler"
 	authUsecase "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/usecase"
+	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/state"
 	"github.com/ShenokZlob/collector-ouphe/pkg/collectorclient"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/go-telegram/bot"
@@ -26,9 +27,12 @@ func NewAppBot(token string, collectorURL string, log logger.Logger) (*AppBot, e
 	authUsecase := authUsecase.NewAuthUsecase(log, collectorClient)
 	authHandler := authHandler.NewAuthHandler(authUsecase, log)
 
+	// State - save user's states
+	mgr := state.NewMemoryManager()
+
 	// Bot options
 	opts := []bot.Option{
-		// bot.WithMiddlewares(authHandler.RegistrationMiddleware),
+		bot.WithMiddlewares(authHandler.RegistrationMiddleware, state.Middleware(mgr)),
 		bot.WithDefaultHandler(defaultHandler),
 	}
 
@@ -55,6 +59,10 @@ func NewAppBot(token string, collectorURL string, log logger.Logger) (*AppBot, e
 	}
 
 	// Initialize router
+
+	// Cancel command
+	b.RegisterHandler(bot.HandlerTypeMessageText, "/cancel", bot.MatchTypeExact, state.CancelHandler(mgr))
+
 	// Auth
 	b.RegisterHandler(bot.HandlerTypeMessageText, "/register", bot.MatchTypeExact, authHandler.HandleRegister)
 
