@@ -10,8 +10,8 @@ import (
 )
 
 type authUsecaseImpl struct {
-	collectorClient collectorclient.CollectorClient
 	log             logger.Logger
+	collectorClient collectorclient.CollectorClient
 	localStorage    *inMemoryStorage
 }
 

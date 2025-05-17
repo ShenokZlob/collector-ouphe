@@ -22,8 +22,7 @@ type AuthUsecase interface {
 func NewAuthHandler(usecase AuthUsecase, log logger.Logger) *AuthHandler {
 	return &AuthHandler{
 		usecase: usecase,
-		// log:     log.With(logger.Field{Key: "handler", String: "auth"}),
-		log: log,
+		log:     log.With(logger.String("handler", "auth")),
 	}
 }
 

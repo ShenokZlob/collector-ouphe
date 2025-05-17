@@ -29,8 +29,9 @@ type CreateCollectionResponse struct {
 
 // RenameCollection
 type RenameCollectionRequest struct {
-	Token        string
-	CollectionID string
+	Token             string
+	CollectionID      string
+	NewCollectionName string
 }
 
 // DeleteCollection

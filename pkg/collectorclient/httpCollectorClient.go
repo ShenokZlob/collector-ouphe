@@ -159,7 +159,13 @@ func (c *HTTPCollectorClient) CreateCollection(reqData *collector.CreateCollecti
 func (c *HTTPCollectorClient) RenameCollection(reqData *collector.RenameCollectionRequest) error {
 	c.Log.Info("Rename collection", logger.String("collection_id", reqData.CollectionID))
 
-	request, err := http.NewRequest(http.MethodPatch, c.URL+"/collections/"+reqData.CollectionID, nil)
+	body, err := json.Marshal(reqData.NewCollectionName)
+	if err != nil {
+		c.Log.Error("Failed to marshal request data")
+		return err
+	}
+
+	request, err := http.NewRequest(http.MethodPatch, c.URL+"/collections/"+reqData.CollectionID, bytes.NewBuffer(body))
 	if err != nil {
 		c.Log.Error("Failed to create request", logger.Error(err))
 		return err
