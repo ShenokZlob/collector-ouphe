@@ -5,6 +5,8 @@ import (
 
 	authHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/handler"
 	authUsecase "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/usecase"
+	collectionHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/collection/handler"
+	collectionUsecase "github.com/ShenokZlob/collector-ouphe/bot-service/internal/collection/usecase"
 	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/state"
 	"github.com/ShenokZlob/collector-ouphe/pkg/collectorclient"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
@@ -19,20 +21,24 @@ type AppBot struct {
 }
 
 func NewAppBot(token string, collectorURL string, log logger.Logger) (*AppBot, error) {
+	// State - save user's states
+	mgr := state.NewMemoryManager()
+
 	// Auth
 	collectorClient := &collectorclient.HTTPCollectorClient{
 		URL: collectorURL,
 		Log: log,
 	}
-	authUsecase := authUsecase.NewAuthUsecase(log, collectorClient)
-	authHandler := authHandler.NewAuthHandler(authUsecase, log)
+	authUse := authUsecase.NewAuthUsecase(log, collectorClient)
+	authHand := authHandler.NewAuthHandler(authUse, log)
 
-	// State - save user's states
-	mgr := state.NewMemoryManager()
+	// Collection
+	collUse := collectionUsecase.NewCollectionUsecaseImpl(log, collectorClient)
+	collHand := collectionHandler.NewCollectionHandler(collUse, mgr, log)
 
 	// Bot options
 	opts := []bot.Option{
-		bot.WithMiddlewares(authHandler.RegistrationMiddleware, state.Middleware(mgr)),
+		bot.WithMiddlewares(authHand.RegistrationMiddleware, state.Middleware(mgr)),
 		bot.WithDefaultHandler(defaultHandler),
 	}
 
@@ -64,7 +70,13 @@ func NewAppBot(token string, collectorURL string, log logger.Logger) (*AppBot, e
 	b.RegisterHandler(bot.HandlerTypeMessageText, "/cancel", bot.MatchTypeExact, state.CancelHandler(mgr))
 
 	// Auth
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/register", bot.MatchTypeExact, authHandler.HandleRegister)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "/register", bot.MatchTypeExact, authHand.HandleRegister)
+
+	// Collection
+	b.RegisterHandler(bot.HandlerTypeMessageText, "/collections", bot.MatchTypeExact, collHand.GetCollectionsListCommand)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "/collection_new", bot.MatchTypeExact, collHand.CreateCollectionCommand)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "/collection_rename", bot.MatchTypeExact, collHand.RenameCollectionCommand)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "/collection_delete", bot.MatchTypeExact, collHand.DeleteCollectionCommand)
 
 	return &AppBot{
 		bot:          b,
