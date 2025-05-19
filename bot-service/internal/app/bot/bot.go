@@ -24,11 +24,13 @@ func NewAppBot(token string, collectorURL string, log logger.Logger) (*AppBot, e
 	// State - save user's states
 	mgr := state.NewMemoryManager()
 
-	// Auth
+	// HTTPCollectorClient
 	collectorClient := &collectorclient.HTTPCollectorClient{
 		URL: collectorURL,
 		Log: log,
 	}
+
+	// Auth
 	authUse := authUsecase.NewAuthUsecase(log, collectorClient)
 	authHand := authHandler.NewAuthHandler(authUse, log)
 

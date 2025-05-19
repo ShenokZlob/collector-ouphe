@@ -61,8 +61,9 @@ func (ac AuthController) Register(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusCreated, gin.H{
 		"user": UserResponse{
-			ID:         user.ID,
+			ID:         createdUser.ID,
 			TelegramID: createdUser.TelegramID,
+			FirstName:  createdUser.FirstName,
 			Username:   createdUser.Username,
 		},
 		"token": token,
@@ -88,6 +89,7 @@ func (ac AuthController) Who(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, UserResponse{
 		ID:         user.ID,
 		TelegramID: user.TelegramID,
+		FirstName:  user.FirstName,
 		Username:   user.Username,
 	})
 }

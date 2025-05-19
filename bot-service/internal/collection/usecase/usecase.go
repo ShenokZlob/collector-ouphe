@@ -12,10 +12,10 @@ import (
 
 type collectionUsecaseImpl struct {
 	log             logger.Logger
-	collectorClient collectorclient.CollectorClient
+	collectorClient collectorclient.CollectorClientCollections
 }
 
-func NewCollectionUsecaseImpl(log logger.Logger, client collectorclient.CollectorClient) *collectionUsecaseImpl {
+func NewCollectionUsecaseImpl(log logger.Logger, client collectorclient.CollectorClientCollections) *collectionUsecaseImpl {
 	return &collectionUsecaseImpl{
 		log:             log,
 		collectorClient: client,

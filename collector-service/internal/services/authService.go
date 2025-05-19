@@ -50,7 +50,7 @@ func (as AuthService) Register(user *models.User) (*models.User, *models.Respons
 func (as AuthService) Who(telegramId string) (*models.User, *models.ResponseErr) {
 	as.log.With(logger.String("method", "Who")).Info("getting user by telegram ID")
 
-	tgIdInt64, respErr := parseTelegramID(telegramId)
+	tgIdInt64, respErr := convertTelegramID(telegramId)
 	if respErr != nil {
 		as.log.Error("failed to parse telegram ID", logger.Error(respErr))
 		return nil, respErr
@@ -89,7 +89,7 @@ func (as AuthService) Login(user *models.User) *models.ResponseErr {
 		}
 	}
 
-	if existingUser.Username != user.Username {
+	if existingUser.TelegramID != user.TelegramID {
 		as.log.Error("invalid credentials", logger.String("error", "invalid credentials"))
 		return &models.ResponseErr{
 			Status:  http.StatusUnauthorized,
@@ -107,7 +107,7 @@ func validateUser(user *models.User) *models.ResponseErr {
 			Message: "Invalid user telegram ID",
 		}
 	}
-	if user.Username == "" {
+	if user.FirstName == "" {
 		return &models.ResponseErr{
 			Status:  http.StatusBadRequest,
 			Message: "Invalid user username",
@@ -116,7 +116,7 @@ func validateUser(user *models.User) *models.ResponseErr {
 	return nil
 }
 
-func parseTelegramID(telegramId string) (int64, *models.ResponseErr) {
+func convertTelegramID(telegramId string) (int64, *models.ResponseErr) {
 	telegramIdInt64, err := strconv.ParseInt(telegramId, 10, 64)
 	if err != nil {
 		return 0, &models.ResponseErr{

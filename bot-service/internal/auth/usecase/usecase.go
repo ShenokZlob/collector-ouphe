@@ -11,11 +11,11 @@ import (
 
 type authUsecaseImpl struct {
 	log             logger.Logger
-	collectorClient collectorclient.CollectorClient
+	collectorClient collectorclient.CollectorClientAuth
 	localStorage    *inMemoryStorage
 }
 
-func NewAuthUsecase(log logger.Logger, client collectorclient.CollectorClient) *authUsecaseImpl {
+func NewAuthUsecase(log logger.Logger, client collectorclient.CollectorClientAuth) *authUsecaseImpl {
 	return &authUsecaseImpl{
 		log:             log,
 		collectorClient: client,
