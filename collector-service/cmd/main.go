@@ -1,11 +1,23 @@
 package main
 
+// @title           Collector Ouphe API
+// @version         1.0
+// @description     Сервис сбора и анализа данных Collector Ouphe
+//
+// @securityDefinitions.apikey  BearerAuth
+// @in                          header
+// @name                        Authorization
+//
+// @host      localhost:8080
+// @BasePath  /
+
 import (
 	"context"
 	"os"
 	"os/signal"
 	"syscall"
 
+	_ "github.com/ShenokZlob/collector-ouphe/collector-service/docs"
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/app"
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/config"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"

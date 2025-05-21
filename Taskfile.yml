@@ -1,7 +1,11 @@
-# Taskfile.yml в корне проекта
 version: "3"
 
 tasks:
+  swag:
+    decs: "Create collector-service/docs"
+    cmds:
+      - swag init -g collector-service/cmd/main.go --output collector-service/docs
+
   docker-build-collector:
     decs: "Build collector-service image"
     cmds:

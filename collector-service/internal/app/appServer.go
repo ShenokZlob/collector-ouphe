@@ -12,6 +12,8 @@ import (
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
@@ -39,6 +41,9 @@ func InitServer(config *viper.Viper, log logger.Logger, db *mongo.Client) *App {
 
 	router := gin.Default()
 
+	// Setup Swagger
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	// Middleware
 	mid := middleware.NewJWTMiddleware(os.Getenv("JWT_SECRET"), log)
 	authMiddleware := mid.Authorization()
@@ -54,7 +59,7 @@ func InitServer(config *viper.Viper, log logger.Logger, db *mongo.Client) *App {
 	// Protected routes
 	authorized := router.Group("/", authMiddleware)
 	{
-		authorized.GET("/collections", ctrlCollections.AllUsersCollections)
+		authorized.GET("/collections", ctrlCollections.GetCollections)
 		authorized.POST("/collections", ctrlCollections.CreateCollection)
 		authorized.PATCH("/collections/:id", ctrlCollections.RenameCollection)
 		authorized.DELETE("/collections/:id", ctrlCollections.DeleteCollection)
