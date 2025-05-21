@@ -8,6 +8,29 @@ tasks:
       - go run ./cmd/main.go
     dir: .
 
+  up:
+    desc: "Launch docker-compose and app"
+    cmds:
+      - echo "Launch docker-compose"
+      - docker-compose up -d
+      - echo "Launch app"
+      - |
+        if ! go run cmd/main.go; then
+          echo "Bot crush! Down containers..."
+          docker-compose down
+          exit 1
+        fi
+    silent: false
+
+  down:
+    desc: "Down all service"
+    cmds:
+      - echo "Down docker-compose..."
+      - docker-compose down
+      - echo "Down app"
+      - pkill -f "go run cmd/main.go" || echo "The active proccess doesn't exist"
+    silent: false
+
   docker-build:
     desc: "Build Docker image for bot-service"
     cmds:

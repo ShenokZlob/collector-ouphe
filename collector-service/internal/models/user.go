@@ -8,7 +8,7 @@ import (
 
 type User struct {
 	ID          string               `bson:"-" json:"id"`
-	ObjectID    bson.ObjectID        `bson:"_id" json:"-"`
+	ObjectID    bson.ObjectID        `bson:"_id,omitempty" json:"-"`
 	TelegramID  int64                `bson:"telegram_id" json:"telegram_id"`
 	FirstName   string               `bson:"first_name" json:"first_name"`
 	LastName    string               `bson:"last_name,omitempty" json:"last_name,omitempty"`
@@ -19,7 +19,7 @@ type User struct {
 }
 
 type UserCollectionRef struct {
-	ObjectID bson.ObjectID `bson:"_id" json:"-"`
+	ObjectID bson.ObjectID `bson:"_id,omitempty" json:"-"`
 	ID       string        `bson:"-" json:"id"`
 	Name     string        `bson:"name" json:"name"`
 }

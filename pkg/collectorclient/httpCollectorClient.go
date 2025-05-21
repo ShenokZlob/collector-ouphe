@@ -64,7 +64,7 @@ func (c *HTTPCollectorClient) RegisterUser(reqdata *collector.RegisterRequest) (
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusCreated {
 		c.Log.Error("Failed to register user in collector service", logger.Int("status_code", resp.StatusCode))
 		return nil, fmt.Errorf("failed to register user in collector service, status code: %d", resp.StatusCode)
 	}

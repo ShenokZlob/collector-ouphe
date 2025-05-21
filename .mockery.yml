@@ -1,0 +1,35 @@
+all: false
+template: testify
+packages:
+  github.com/ShenokZlob/collector-ouphe/pkg/collectorclient:
+    config:
+      dir: ./pkg/collectorclient
+      filename: "mocks.go"
+      structname: "Mock{{.InterfaceName}}"
+    interfaces:
+      CollectorClient:
+        config:
+          dir: ./bot-service/internal/mocks
+          pkgname: mocks
+
+  github.com/ShenokZlob/collector-ouphe/collector-service/internal/services:
+    config:
+      dir: ./collector-service/internal/services
+      filename: "mocks_for_services.go"
+      structname: "Mock{{.InterfaceName}}"
+    interfaces:
+      AuthRepositorer:
+        config:
+          dir: ./collector-service/internal/mocks
+          pkgname: mocks
+
+  github.com/ShenokZlob/collector-ouphe/collector-service/internal/controllers:
+    config:
+      dir: ./collector-service/internal/controllers
+      filename: "mocks_for_controllers.go"
+      structname: "Mock{{.InterfaceName}}"
+    interfaces:
+      AuthServicer:
+        config:
+          dir: ./collector-service/internal/mocks
+          pkgname: mocks

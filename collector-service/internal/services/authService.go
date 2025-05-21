@@ -71,6 +71,7 @@ func (as AuthService) Login(user *models.User) *models.ResponseErr {
 
 	respErr := validateUser(user)
 	if respErr != nil {
+		as.log.Error("failed to validate user", logger.Error(respErr))
 		return respErr
 	}
 
@@ -107,12 +108,7 @@ func validateUser(user *models.User) *models.ResponseErr {
 			Message: "Invalid user telegram ID",
 		}
 	}
-	if user.FirstName == "" {
-		return &models.ResponseErr{
-			Status:  http.StatusBadRequest,
-			Message: "Invalid user username",
-		}
-	}
+
 	return nil
 }
 
