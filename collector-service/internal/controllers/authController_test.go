@@ -14,19 +14,19 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// go test github.com/ShenokZlob/collector-ouphe/collector-service/internal/controllers -run IntegrationTestSuite
-type IntegrationTestSuite struct {
+// go test github.com/ShenokZlob/collector-ouphe/collector-service/internal/controllers -run UnitTestSuite
+type UnitTestSuite struct {
 	suite.Suite
 	router          *gin.Engine
 	authController  *AuthController
 	authServiceMock *mocks.MockAuthServicer
 }
 
-func TestIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, &IntegrationTestSuite{})
+func TestUnitTestSuite(t *testing.T) {
+	suite.Run(t, &UnitTestSuite{})
 }
 
-func (its *IntegrationTestSuite) SetupSuite() {
+func (its *UnitTestSuite) SetupSuite() {
 	gin.SetMode(gin.TestMode)
 
 	its.router = gin.New()
@@ -36,12 +36,12 @@ func (its *IntegrationTestSuite) SetupSuite() {
 	its.router.POST("/login", func(ctx *gin.Context) { its.authController.Login(ctx) })
 }
 
-func (its *IntegrationTestSuite) SetupTest() {
+func (its *UnitTestSuite) SetupTest() {
 	its.authServiceMock = &mocks.MockAuthServicer{}
 	its.authController = NewAuthController(its.authServiceMock, logger.SilentLogger{})
 }
 
-func (its *IntegrationTestSuite) TestRegister() {
+func (its *UnitTestSuite) TestRegister() {
 	// Mocking the HTTP context
 	reqModel := &models.User{TelegramID: 123, FirstName: "John", Username: "@john"}
 	resModel := &models.User{ID: "abc", TelegramID: 123, FirstName: "John", Username: "@john"}
@@ -69,7 +69,7 @@ func (its *IntegrationTestSuite) TestRegister() {
 	its.authServiceMock.AssertExpectations(its.T())
 }
 
-func (its *IntegrationTestSuite) TestWho() {
+func (its *UnitTestSuite) TestWho() {
 	// Mocking the HTTP context
 	telegramIdString := "123"
 	respModel := &models.User{ID: "abc", TelegramID: 123, FirstName: "John", Username: "@john"}
@@ -93,7 +93,7 @@ func (its *IntegrationTestSuite) TestWho() {
 	its.authServiceMock.AssertExpectations(its.T())
 }
 
-func (its *IntegrationTestSuite) TestLogin() {
+func (its *UnitTestSuite) TestLogin() {
 	// Mocking the HTTP context
 	reqModel := &models.User{TelegramID: 123, FirstName: "John", Username: "@john"}
 	its.authServiceMock.On("Login", reqModel).Return(nil)

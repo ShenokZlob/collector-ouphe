@@ -118,7 +118,8 @@ func (ac AuthController) Login(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"token": token,
+		"token":   token,
+		"success": true,
 	})
 }
 

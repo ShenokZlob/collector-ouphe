@@ -7,8 +7,10 @@ import (
 	"syscall"
 
 	appbot "github.com/ShenokZlob/collector-ouphe/bot-service/internal/app/bot"
+	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/cache"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -21,8 +23,14 @@ func main() {
 	}
 	defer log.Sync()
 
+	log.Info("Init cache...")
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: os.Getenv("REDIS_ADDR"),
+	})
+	cch := cache.NewCache(redisClient)
+
 	log.Info("Init bot...")
-	app, err := appbot.NewAppBot(os.Getenv("BOT_TOKEN"), os.Getenv("COLLECTOR_URL"), log)
+	app, err := appbot.NewAppBot(os.Getenv("BOT_TOKEN"), os.Getenv("COLLECTOR_URL"), log, cch)
 	if err != nil {
 		log.Error("Failed to create app bot", logger.Error(err))
 	}

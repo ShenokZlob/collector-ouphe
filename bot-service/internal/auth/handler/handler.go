@@ -28,12 +28,11 @@ func NewAuthHandler(usecase AuthUsecase, log logger.Logger) *AuthHandler {
 
 // HandleRegister handles the registration of a new user.
 func (h *AuthHandler) HandleRegister(ctx context.Context, b *bot.Bot, update *models.Update) {
-	user := update.Message.From
 	token, err := h.usecase.RegisterUser(dto.UserInfo{
-		TelegramID: user.ID,
-		FirstName:  user.FirstName,
-		LastName:   user.LastName,
-		Username:   user.Username,
+		TelegramID: update.Message.From.ID,
+		FirstName:  update.Message.From.FirstName,
+		LastName:   update.Message.From.LastName,
+		Username:   update.Message.From.Username,
 	})
 	if err != nil {
 		h.log.Error("Failed to register user", logger.Error(err))

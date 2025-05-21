@@ -6,6 +6,7 @@ tasks:
     cmds:
       - go mod tidy
       - go run cmd/main.go --config=config
+
   up:
     desc: "Launch docker-compose and app"
     cmds:
@@ -21,6 +22,7 @@ tasks:
           exit 1
         fi
     silent: false
+
   kill:
     desc: "Down all service"
     cmds:

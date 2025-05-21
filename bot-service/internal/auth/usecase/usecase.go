@@ -1,9 +1,11 @@
 package usecase
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/dto"
+	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/cache"
 	"github.com/ShenokZlob/collector-ouphe/pkg/collectorclient"
 	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/collector"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
@@ -12,14 +14,14 @@ import (
 type authUsecaseImpl struct {
 	log             logger.Logger
 	collectorClient collectorclient.CollectorClientAuth
-	localStorage    *inMemoryStorage
+	cache           *cache.Cache
 }
 
-func NewAuthUsecase(log logger.Logger, client collectorclient.CollectorClientAuth) *authUsecaseImpl {
+func NewAuthUsecase(log logger.Logger, client collectorclient.CollectorClientAuth, cache *cache.Cache) *authUsecaseImpl {
 	return &authUsecaseImpl{
 		log:             log,
 		collectorClient: client,
-		localStorage:    newInMemoryStorage(),
+		cache:           cache,
 	}
 }
 
@@ -41,22 +43,19 @@ func (a *authUsecaseImpl) RegisterUser(user dto.UserInfo) (string, error) {
 		return "", err
 	}
 
-	a.log.Info("Registering user in local storage", logger.String("telegram_id", fmt.Sprint(user.TelegramID)))
-	a.localStorage.AddUser(user.TelegramID, reqData.Token)
+	a.log.Info("Save new user in cache", logger.String("telegram_id", fmt.Sprint(user.TelegramID)))
+	a.cache.Set(context.TODO(), fmt.Sprint(user.TelegramID), reqData.Token)
 
 	return reqData.Token, nil
 }
 
 // IsRegistered return token JWT (if it exist)
 func (a *authUsecaseImpl) IsRegistered(telegramID int64) (string, bool) {
-	// Check in local struct
-	token, ok := a.localStorage.GetUser(telegramID)
-	if ok {
-		a.log.Info("User found in local storage", logger.String("telegram_id", fmt.Sprint(telegramID)))
-		return token, ok
+	// Check in the cache (Redis)
+	value, err := a.checkInCache(fmt.Sprint(telegramID))
+	if err == nil {
+		return value, true
 	}
-
-	// TODO: Check in the database (Redis)
 
 	// Check in the collector service
 	respData, err := a.collectorClient.CheckUser(&collector.CheckUserRequest{
@@ -67,5 +66,23 @@ func (a *authUsecaseImpl) IsRegistered(telegramID int64) (string, bool) {
 		return "", false
 	}
 
+	// If the user is registered, save the token in the cache
+	if respData.Success {
+		a.log.Info("User found in collector service", logger.String("telegram_id", fmt.Sprint(telegramID)))
+		a.cache.Set(context.TODO(), fmt.Sprint(telegramID), respData.Token)
+	}
+
 	return respData.Token, respData.Success
+}
+
+func (a *authUsecaseImpl) checkInCache(telegramID string) (string, error) {
+	// Check in the cache (Redis)
+	value, err := a.cache.Get(context.TODO(), telegramID)
+	if err != nil {
+		a.log.Error("Failed to get user from cache", logger.Error(err))
+		return "", err
+	}
+
+	a.log.Info("User found in cache", logger.String("telegram_id", telegramID))
+	return value, nil
 }

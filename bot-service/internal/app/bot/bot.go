@@ -5,6 +5,7 @@ import (
 
 	authHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/handler"
 	authUsecase "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/usecase"
+	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/cache"
 	collectionHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/collection/handler"
 	collectionUsecase "github.com/ShenokZlob/collector-ouphe/bot-service/internal/collection/usecase"
 	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/state"
@@ -20,7 +21,7 @@ type AppBot struct {
 	log          logger.Logger
 }
 
-func NewAppBot(token string, collectorURL string, log logger.Logger) (*AppBot, error) {
+func NewAppBot(token string, collectorURL string, log logger.Logger, cache *cache.Cache) (*AppBot, error) {
 	// State - save user's states
 	mgr := state.NewMemoryManager()
 
@@ -31,7 +32,7 @@ func NewAppBot(token string, collectorURL string, log logger.Logger) (*AppBot, e
 	}
 
 	// Auth
-	authUse := authUsecase.NewAuthUsecase(log, collectorClient)
+	authUse := authUsecase.NewAuthUsecase(log, collectorClient, cache)
 	authHand := authHandler.NewAuthHandler(authUse, log)
 
 	// Collection

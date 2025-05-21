@@ -142,7 +142,13 @@ func (h *CollectionHandler) RenameCollectionResponse(ctx context.Context, b *bot
 
 	names := strings.Split(update.Message.Text, " ")
 
-	// TODO: Check old collection's name
+	if validateCollectionName(names[0]) {
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "У вас нет такой коллекции!",
+		})
+		return
+	}
 
 	// Check new collection's name
 	if !validateCollectionName(names[1]) {
