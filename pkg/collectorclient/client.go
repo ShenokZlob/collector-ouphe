@@ -3,6 +3,7 @@ package collectorclient
 import (
 	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/auth"
 	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/collections"
+	"github.com/gin-gonic/gin"
 )
 
 type CollectorClient interface {
@@ -16,8 +17,8 @@ type CollectorClientAuth interface {
 }
 
 type CollectorClientCollections interface {
-	GetUserWithCollections(reqData *collections.GetCollectionsRequest) (*collections.GetCollectionsResponse, error)
-	CreateCollection(reqData *collections.CreateCollectionRequest) (*collections.CreateCollectionResponse, error)
-	RenameCollection(reqData *collections.RenameCollectionRequest) error
-	DeleteCollection(reqData *collections.DeleteCollectionRequest) error
+	GetUserCollections(ctx *gin.Context) ([]collections.Collection, error)
+	CreateCollection(ctx *gin.Context, req *collections.CreateCollectionRequest) (*collections.Collection, error)
+	RenameCollection(ctx *gin.Context, collectionID string, req *collections.RenameCollectionRequest) error
+	DeleteCollection(ctx *gin.Context, collectionID string) error
 }

@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/collector"
+	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/auth"
+	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/collections"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
+	"github.com/gin-gonic/gin"
 )
 
 type HTTPCollectorClient struct {
@@ -17,7 +19,7 @@ type HTTPCollectorClient struct {
 }
 
 // CheckUser checks if the user exists in the collector service
-func (c *HTTPCollectorClient) CheckUser(reqData *collector.CheckUserRequest) (*collector.CheckUserResponse, error) {
+func (c *HTTPCollectorClient) CheckUser(reqData *auth.CheckUserRequest) (*auth.CheckUserResponse, error) {
 	c.Log.Info("Checking user in collector service", logger.Int("telegram_id", int(reqData.TelegramID)))
 
 	body, err := json.Marshal(reqData)
@@ -38,7 +40,7 @@ func (c *HTTPCollectorClient) CheckUser(reqData *collector.CheckUserRequest) (*c
 		return nil, fmt.Errorf("failed to check user in collector service, status code: %d", resp.StatusCode)
 	}
 
-	var respData collector.CheckUserResponse
+	var respData auth.CheckUserResponse
 	if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {
 		c.Log.Error("Failed to decode response data", logger.Error(err))
 		return nil, err
@@ -48,7 +50,7 @@ func (c *HTTPCollectorClient) CheckUser(reqData *collector.CheckUserRequest) (*c
 }
 
 // RegisterUser reg the user in collection service
-func (c *HTTPCollectorClient) RegisterUser(reqdata *collector.RegisterRequest) (*collector.RegisterResponse, error) {
+func (c *HTTPCollectorClient) RegisterUser(reqdata *auth.RegisterRequest) (*auth.RegisterResponse, error) {
 	c.Log.Info("Registering user in collector service", logger.Int("telegram_id", int(reqdata.TelegramID)))
 
 	body, err := json.Marshal(reqdata)
@@ -69,7 +71,7 @@ func (c *HTTPCollectorClient) RegisterUser(reqdata *collector.RegisterRequest) (
 		return nil, fmt.Errorf("failed to register user in collector service, status code: %d", resp.StatusCode)
 	}
 
-	var respData collector.RegisterResponse
+	var respData auth.RegisterResponse
 	if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {
 		c.Log.Error("Failed to decode response data", logger.Error(err))
 		return nil, err
@@ -81,8 +83,14 @@ func (c *HTTPCollectorClient) RegisterUser(reqdata *collector.RegisterRequest) (
 // GetCollections gets list of collections for user
 // Need JWT token for this opperation
 // Authorization: Bearer TOKEN
-func (c *HTTPCollectorClient) GetUserWithCollections(reqData *collector.GetCollectionsRequest) (*collector.GetCollectionsResponse, error) {
-	c.Log.Info("Get user's list of collections", logger.String("token", reqData.Token))
+func (c *HTTPCollectorClient) GetUserCollections(ctx *gin.Context) ([]collections.Collection, error) {
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		c.Log.Error("Authorization token is missing")
+		return nil, fmt.Errorf("authorization token is missing")
+	}
+
+	c.Log.Info("Get user's list of collections", logger.String("token", token))
 
 	request, err := http.NewRequest(http.MethodGet, c.URL+"/collections", nil)
 	if err != nil {
@@ -90,7 +98,7 @@ func (c *HTTPCollectorClient) GetUserWithCollections(reqData *collector.GetColle
 		return nil, err
 	}
 
-	request.Header.Set("Authorization", "Bearer "+reqData.Token)
+	request.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := c.ClientHTTP.Do(request)
 	if err != nil {
@@ -99,27 +107,28 @@ func (c *HTTPCollectorClient) GetUserWithCollections(reqData *collector.GetColle
 	}
 	defer resp.Body.Close()
 
-	var respData collector.GetCollectionsResponse
-	err = json.NewDecoder(resp.Body).Decode(&reqData)
+	var collections []collections.Collection
+	err = json.NewDecoder(resp.Body).Decode(&collections)
 	if err != nil {
 		c.Log.Error("Failed to decode a body request", logger.Error(err))
 		return nil, err
 	}
 
-	return &respData, nil
+	return collections, nil
 }
 
 // Need JWT token for this opperation
-func (c *HTTPCollectorClient) CreateCollection(reqData *collector.CreateCollectionRequest) (*collector.CreateCollectionResponse, error) {
-	// doesn't look good to logging this information!!!
-	c.Log.Info("Create collection", logger.String("token_auth", reqData.Token))
-
-	var collectionName = struct {
-		Name string `json:"name"`
-	}{
-		Name: reqData.CollectionName,
+func (c *HTTPCollectorClient) CreateCollection(ctx *gin.Context, req *collections.CreateCollectionRequest) (*collections.Collection, error) {
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		c.Log.Error("Authorization token is missing")
+		return nil, fmt.Errorf("authorization token is missing")
 	}
-	body, err := json.Marshal(&collectionName)
+
+	// doesn't look good to logging this information!!!
+	c.Log.Info("Create collection", logger.String("token_auth", token))
+
+	body, err := json.Marshal(&req)
 	if err != nil {
 		c.Log.Error("Failed to marshal data", logger.Error(err))
 		return nil, err
@@ -131,7 +140,7 @@ func (c *HTTPCollectorClient) CreateCollection(reqData *collector.CreateCollecti
 		return nil, err
 	}
 
-	request.Header.Set("Authorization", "Bearer "+reqData.Token)
+	request.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := c.ClientHTTP.Do(request)
 	if err != nil {
@@ -145,33 +154,39 @@ func (c *HTTPCollectorClient) CreateCollection(reqData *collector.CreateCollecti
 		return nil, fmt.Errorf("failed to create collection's, status code: %d", resp.StatusCode)
 	}
 
-	var respData collector.CreateCollectionResponse
-	err = json.NewDecoder(resp.Body).Decode(&respData)
+	var collection collections.Collection
+	err = json.NewDecoder(resp.Body).Decode(&collection)
 	if err != nil {
 		c.Log.Error("Failed to decode a responser body", logger.Error(err))
 		return nil, err
 	}
 
-	return &respData, nil
+	return &collection, nil
 }
 
 // Need JWT token for this opperation
-func (c *HTTPCollectorClient) RenameCollection(reqData *collector.RenameCollectionRequest) error {
-	c.Log.Info("Rename collection", logger.String("collection_id", reqData.CollectionID))
+func (c *HTTPCollectorClient) RenameCollection(ctx *gin.Context, collectionID string, req *collections.RenameCollectionRequest) error {
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		c.Log.Error("Authorization token is missing")
+		return fmt.Errorf("authorization token is missing")
+	}
 
-	body, err := json.Marshal(reqData.NewCollectionName)
+	c.Log.Info("Rename collection", logger.String("collection_id", collectionID), logger.String("token_auth", token))
+
+	body, err := json.Marshal(req)
 	if err != nil {
 		c.Log.Error("Failed to marshal request data")
 		return err
 	}
 
-	request, err := http.NewRequest(http.MethodPatch, c.URL+"/collections/"+reqData.CollectionID, bytes.NewBuffer(body))
+	request, err := http.NewRequest(http.MethodPatch, c.URL+"/collections/"+collectionID, bytes.NewBuffer(body))
 	if err != nil {
 		c.Log.Error("Failed to create request", logger.Error(err))
 		return err
 	}
 
-	request.Header.Set("Authorization", "Bearer "+reqData.Token)
+	request.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := c.ClientHTTP.Do(request)
 	if err != nil {
@@ -189,17 +204,23 @@ func (c *HTTPCollectorClient) RenameCollection(reqData *collector.RenameCollecti
 }
 
 // Need JWT token for this opperation
-func (c *HTTPCollectorClient) DeleteCollection(reqData *collector.DeleteCollectionRequest) error {
-	// doesn't look good to logging this information!!!
-	c.Log.Info("Delete collection", logger.String("token_auth", reqData.Token))
+func (c *HTTPCollectorClient) DeleteCollection(ctx *gin.Context, collectionID string) error {
+	token := ctx.GetHeader("Authorization")
+	if token == "" {
+		c.Log.Error("Authorization token is missing")
+		return fmt.Errorf("authorization token is missing")
+	}
 
-	request, err := http.NewRequest(http.MethodDelete, c.URL+"/collections/"+reqData.CollectionID, nil)
+	// doesn't look good to logging this information!!!
+	c.Log.Info("Delete collection", logger.String("token_auth", token))
+
+	request, err := http.NewRequest(http.MethodDelete, c.URL+"/collections/"+collectionID, nil)
 	if err != nil {
 		c.Log.Error("Failed to prepare a request", logger.Error(err))
 		return err
 	}
 
-	request.Header.Set("Authorization", "Bearer "+reqData.Token)
+	request.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := c.ClientHTTP.Do(request)
 	if err != nil {
