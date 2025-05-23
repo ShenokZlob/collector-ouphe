@@ -7,7 +7,8 @@ import (
 	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/dto"
 	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/cache"
 	"github.com/ShenokZlob/collector-ouphe/pkg/collectorclient"
-	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/collector"
+	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/auth"
+
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 )
 
@@ -32,11 +33,11 @@ func NewAuthUsecase(log logger.Logger, client collectorclient.CollectorClientAut
 func (a *authUsecaseImpl) RegisterUser(user dto.UserInfo) (string, error) {
 	a.log.Info("Registering user", logger.String("method", "RegisterUser"), logger.String("telegram_id", fmt.Sprint(user.TelegramID)))
 
-	reqData, err := a.collectorClient.RegisterUser(&collector.RegisterRequest{
+	reqData, err := a.collectorClient.RegisterUser(&auth.RegisterRequest{
 		TelegramID: user.TelegramID,
+		Username:   user.Username,
 		FirstName:  user.FirstName,
 		LastName:   user.LastName,
-		Username:   user.Username,
 	})
 	if err != nil {
 		a.log.Error("Failed to register user in collector service", logger.Error(err))
@@ -58,7 +59,7 @@ func (a *authUsecaseImpl) IsRegistered(telegramID int64) (string, bool) {
 	}
 
 	// Check in the collector service
-	respData, err := a.collectorClient.CheckUser(&collector.CheckUserRequest{
+	respData, err := a.collectorClient.CheckUser(&auth.CheckUserRequest{
 		TelegramID: telegramID,
 	})
 	if err != nil {

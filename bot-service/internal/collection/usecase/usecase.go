@@ -2,11 +2,10 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/authctx"
 	"github.com/ShenokZlob/collector-ouphe/pkg/collectorclient"
-	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/collector"
+	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/collections"
+
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 )
 
@@ -25,22 +24,14 @@ func NewCollectionUsecaseImpl(log logger.Logger, client collectorclient.Collecto
 func (u *collectionUsecaseImpl) GetCollecionsList(ctx context.Context) ([]string, error) {
 	u.log.Info("Get collection's list", logger.String("method", "GetCollectionsList"))
 
-	token, ok := authctx.GetJWT(ctx)
-	if !ok {
-		u.log.Error("The user doesn't have a jwt token")
-		return nil, fmt.Errorf("don't have a jwt token")
-	}
-
-	respData, err := u.collectorClient.GetUserWithCollections(&collector.GetCollectionsRequest{
-		Token: token,
-	})
+	collections, err := u.collectorClient.GetUserCollections(ctx)
 	if err != nil {
 		u.log.Error("Error when accessing the collector service", logger.Error(err))
 		return nil, err
 	}
 
-	collectionsNames := make([]string, len(respData.Collections))
-	for _, v := range respData.Collections {
+	collectionsNames := make([]string, len(collections))
+	for _, v := range collections {
 		collectionsNames = append(collectionsNames, v.Name)
 	}
 
@@ -49,45 +40,30 @@ func (u *collectionUsecaseImpl) GetCollecionsList(ctx context.Context) ([]string
 	return collectionsNames, nil
 }
 
-func (u *collectionUsecaseImpl) CreateaCollection(ctx context.Context, name string) error {
+func (u *collectionUsecaseImpl) CreateaCollection(ctx context.Context, name string) (*collections.Collection, error) {
 	u.log.Info("Create collecion", logger.String("method", "CreateCollection"))
 
-	token, ok := authctx.GetJWT(ctx)
-	if !ok {
-		u.log.Error("The user doesn't have a jwt token")
-		return fmt.Errorf("don't have a jwt token")
-	}
-
-	_, err := u.collectorClient.CreateCollection(&collector.CreateCollectionRequest{
-		Token:          token,
-		CollectionName: name,
+	collection, err := u.collectorClient.CreateCollection(ctx, &collections.CreateCollectionRequest{
+		Name: name,
 	})
 	if err != nil {
 		u.log.Error("Error when accessing the collector service", logger.Error(err))
-		return err
+		return nil, err
 	}
 
 	// TODO: Save respData in cache
 
-	return nil
+	return collection, nil
 }
 
 func (u *collectionUsecaseImpl) RenameCollection(ctx context.Context, oldName, newName string) error {
 	u.log.Info("Rename collecion", logger.String("method", "ReanameCollection"))
 
-	token, ok := authctx.GetJWT(ctx)
-	if !ok {
-		u.log.Error("The user doesn't have a jwt token")
-		return fmt.Errorf("don't have a jwt token")
-	}
-
 	// TODO: get collection ID by the old name (from cache or collector service)
 	collectionID := getCollectionIdByName(oldName)
 
-	err := u.collectorClient.RenameCollection(&collector.RenameCollectionRequest{
-		Token:             token,
-		CollectionID:      collectionID,
-		NewCollectionName: newName,
+	err := u.collectorClient.RenameCollection(ctx, collectionID, &collections.RenameCollectionRequest{
+		Name: newName,
 	})
 	if err != nil {
 		u.log.Error("Error when accessing the collector service", logger.Error(err))
@@ -102,18 +78,9 @@ func (u *collectionUsecaseImpl) RenameCollection(ctx context.Context, oldName, n
 func (u *collectionUsecaseImpl) DeleteCollection(ctx context.Context, name string) error {
 	u.log.Info("Delete collection", logger.String("method", "DeleteCollection"))
 
-	token, ok := authctx.GetJWT(ctx)
-	if !ok {
-		u.log.Error("The user doesn't have a jwt token")
-		return fmt.Errorf("don't have a jwt token")
-	}
-
 	collectionID := getCollectionIdByName(name)
 
-	err := u.collectorClient.DeleteCollection(&collector.DeleteCollectionRequest{
-		Token:        token,
-		CollectionID: collectionID,
-	})
+	err := u.collectorClient.DeleteCollection(ctx, collectionID)
 	if err != nil {
 		u.log.Error("Error when accessing the collector service", logger.Error(err))
 		return err

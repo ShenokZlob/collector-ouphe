@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 
-	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/authctx"
+	"github.com/ShenokZlob/collector-ouphe/pkg/authctx"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
