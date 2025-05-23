@@ -5,7 +5,10 @@
 package mocks
 
 import (
-	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/collector"
+	"context"
+
+	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/auth"
+	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/collections"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -37,26 +40,26 @@ func (_m *MockCollectorClient) EXPECT() *MockCollectorClient_Expecter {
 }
 
 // CheckUser provides a mock function for the type MockCollectorClient
-func (_mock *MockCollectorClient) CheckUser(reqData *collector.CheckUserRequest) (*collector.CheckUserResponse, error) {
+func (_mock *MockCollectorClient) CheckUser(reqData *auth.CheckUserRequest) (*auth.CheckUserResponse, error) {
 	ret := _mock.Called(reqData)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CheckUser")
 	}
 
-	var r0 *collector.CheckUserResponse
+	var r0 *auth.CheckUserResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(*collector.CheckUserRequest) (*collector.CheckUserResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(*auth.CheckUserRequest) (*auth.CheckUserResponse, error)); ok {
 		return returnFunc(reqData)
 	}
-	if returnFunc, ok := ret.Get(0).(func(*collector.CheckUserRequest) *collector.CheckUserResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(*auth.CheckUserRequest) *auth.CheckUserResponse); ok {
 		r0 = returnFunc(reqData)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*collector.CheckUserResponse)
+			r0 = ret.Get(0).(*auth.CheckUserResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(*collector.CheckUserRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(*auth.CheckUserRequest) error); ok {
 		r1 = returnFunc(reqData)
 	} else {
 		r1 = ret.Error(1)
@@ -75,45 +78,45 @@ func (_e *MockCollectorClient_Expecter) CheckUser(reqData interface{}) *MockColl
 	return &MockCollectorClient_CheckUser_Call{Call: _e.mock.On("CheckUser", reqData)}
 }
 
-func (_c *MockCollectorClient_CheckUser_Call) Run(run func(reqData *collector.CheckUserRequest)) *MockCollectorClient_CheckUser_Call {
+func (_c *MockCollectorClient_CheckUser_Call) Run(run func(reqData *auth.CheckUserRequest)) *MockCollectorClient_CheckUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*collector.CheckUserRequest))
+		run(args[0].(*auth.CheckUserRequest))
 	})
 	return _c
 }
 
-func (_c *MockCollectorClient_CheckUser_Call) Return(checkUserResponse *collector.CheckUserResponse, err error) *MockCollectorClient_CheckUser_Call {
+func (_c *MockCollectorClient_CheckUser_Call) Return(checkUserResponse *auth.CheckUserResponse, err error) *MockCollectorClient_CheckUser_Call {
 	_c.Call.Return(checkUserResponse, err)
 	return _c
 }
 
-func (_c *MockCollectorClient_CheckUser_Call) RunAndReturn(run func(reqData *collector.CheckUserRequest) (*collector.CheckUserResponse, error)) *MockCollectorClient_CheckUser_Call {
+func (_c *MockCollectorClient_CheckUser_Call) RunAndReturn(run func(reqData *auth.CheckUserRequest) (*auth.CheckUserResponse, error)) *MockCollectorClient_CheckUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateCollection provides a mock function for the type MockCollectorClient
-func (_mock *MockCollectorClient) CreateCollection(reqData *collector.CreateCollectionRequest) (*collector.CreateCollectionResponse, error) {
-	ret := _mock.Called(reqData)
+func (_mock *MockCollectorClient) CreateCollection(ctx context.Context, req *collections.CreateCollectionRequest) (*collections.Collection, error) {
+	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateCollection")
 	}
 
-	var r0 *collector.CreateCollectionResponse
+	var r0 *collections.Collection
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(*collector.CreateCollectionRequest) (*collector.CreateCollectionResponse, error)); ok {
-		return returnFunc(reqData)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *collections.CreateCollectionRequest) (*collections.Collection, error)); ok {
+		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(*collector.CreateCollectionRequest) *collector.CreateCollectionResponse); ok {
-		r0 = returnFunc(reqData)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *collections.CreateCollectionRequest) *collections.Collection); ok {
+		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*collector.CreateCollectionResponse)
+			r0 = ret.Get(0).(*collections.Collection)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(*collector.CreateCollectionRequest) error); ok {
-		r1 = returnFunc(reqData)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *collections.CreateCollectionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -126,39 +129,40 @@ type MockCollectorClient_CreateCollection_Call struct {
 }
 
 // CreateCollection is a helper method to define mock.On call
-//   - reqData
-func (_e *MockCollectorClient_Expecter) CreateCollection(reqData interface{}) *MockCollectorClient_CreateCollection_Call {
-	return &MockCollectorClient_CreateCollection_Call{Call: _e.mock.On("CreateCollection", reqData)}
+//   - ctx
+//   - req
+func (_e *MockCollectorClient_Expecter) CreateCollection(ctx interface{}, req interface{}) *MockCollectorClient_CreateCollection_Call {
+	return &MockCollectorClient_CreateCollection_Call{Call: _e.mock.On("CreateCollection", ctx, req)}
 }
 
-func (_c *MockCollectorClient_CreateCollection_Call) Run(run func(reqData *collector.CreateCollectionRequest)) *MockCollectorClient_CreateCollection_Call {
+func (_c *MockCollectorClient_CreateCollection_Call) Run(run func(ctx context.Context, req *collections.CreateCollectionRequest)) *MockCollectorClient_CreateCollection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*collector.CreateCollectionRequest))
+		run(args[0].(context.Context), args[1].(*collections.CreateCollectionRequest))
 	})
 	return _c
 }
 
-func (_c *MockCollectorClient_CreateCollection_Call) Return(createCollectionResponse *collector.CreateCollectionResponse, err error) *MockCollectorClient_CreateCollection_Call {
-	_c.Call.Return(createCollectionResponse, err)
+func (_c *MockCollectorClient_CreateCollection_Call) Return(collection *collections.Collection, err error) *MockCollectorClient_CreateCollection_Call {
+	_c.Call.Return(collection, err)
 	return _c
 }
 
-func (_c *MockCollectorClient_CreateCollection_Call) RunAndReturn(run func(reqData *collector.CreateCollectionRequest) (*collector.CreateCollectionResponse, error)) *MockCollectorClient_CreateCollection_Call {
+func (_c *MockCollectorClient_CreateCollection_Call) RunAndReturn(run func(ctx context.Context, req *collections.CreateCollectionRequest) (*collections.Collection, error)) *MockCollectorClient_CreateCollection_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteCollection provides a mock function for the type MockCollectorClient
-func (_mock *MockCollectorClient) DeleteCollection(reqData *collector.DeleteCollectionRequest) error {
-	ret := _mock.Called(reqData)
+func (_mock *MockCollectorClient) DeleteCollection(ctx context.Context, collectionID string) error {
+	ret := _mock.Called(ctx, collectionID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteCollection")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(*collector.DeleteCollectionRequest) error); ok {
-		r0 = returnFunc(reqData)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, collectionID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -171,14 +175,15 @@ type MockCollectorClient_DeleteCollection_Call struct {
 }
 
 // DeleteCollection is a helper method to define mock.On call
-//   - reqData
-func (_e *MockCollectorClient_Expecter) DeleteCollection(reqData interface{}) *MockCollectorClient_DeleteCollection_Call {
-	return &MockCollectorClient_DeleteCollection_Call{Call: _e.mock.On("DeleteCollection", reqData)}
+//   - ctx
+//   - collectionID
+func (_e *MockCollectorClient_Expecter) DeleteCollection(ctx interface{}, collectionID interface{}) *MockCollectorClient_DeleteCollection_Call {
+	return &MockCollectorClient_DeleteCollection_Call{Call: _e.mock.On("DeleteCollection", ctx, collectionID)}
 }
 
-func (_c *MockCollectorClient_DeleteCollection_Call) Run(run func(reqData *collector.DeleteCollectionRequest)) *MockCollectorClient_DeleteCollection_Call {
+func (_c *MockCollectorClient_DeleteCollection_Call) Run(run func(ctx context.Context, collectionID string)) *MockCollectorClient_DeleteCollection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*collector.DeleteCollectionRequest))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -188,88 +193,88 @@ func (_c *MockCollectorClient_DeleteCollection_Call) Return(err error) *MockColl
 	return _c
 }
 
-func (_c *MockCollectorClient_DeleteCollection_Call) RunAndReturn(run func(reqData *collector.DeleteCollectionRequest) error) *MockCollectorClient_DeleteCollection_Call {
+func (_c *MockCollectorClient_DeleteCollection_Call) RunAndReturn(run func(ctx context.Context, collectionID string) error) *MockCollectorClient_DeleteCollection_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetUserWithCollections provides a mock function for the type MockCollectorClient
-func (_mock *MockCollectorClient) GetUserWithCollections(reqData *collector.GetCollectionsRequest) (*collector.GetCollectionsResponse, error) {
-	ret := _mock.Called(reqData)
+// GetUserCollections provides a mock function for the type MockCollectorClient
+func (_mock *MockCollectorClient) GetUserCollections(ctx context.Context) ([]collections.Collection, error) {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetUserWithCollections")
+		panic("no return value specified for GetUserCollections")
 	}
 
-	var r0 *collector.GetCollectionsResponse
+	var r0 []collections.Collection
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(*collector.GetCollectionsRequest) (*collector.GetCollectionsResponse, error)); ok {
-		return returnFunc(reqData)
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]collections.Collection, error)); ok {
+		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func(*collector.GetCollectionsRequest) *collector.GetCollectionsResponse); ok {
-		r0 = returnFunc(reqData)
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []collections.Collection); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*collector.GetCollectionsResponse)
+			r0 = ret.Get(0).([]collections.Collection)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(*collector.GetCollectionsRequest) error); ok {
-		r1 = returnFunc(reqData)
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockCollectorClient_GetUserWithCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserWithCollections'
-type MockCollectorClient_GetUserWithCollections_Call struct {
+// MockCollectorClient_GetUserCollections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserCollections'
+type MockCollectorClient_GetUserCollections_Call struct {
 	*mock.Call
 }
 
-// GetUserWithCollections is a helper method to define mock.On call
-//   - reqData
-func (_e *MockCollectorClient_Expecter) GetUserWithCollections(reqData interface{}) *MockCollectorClient_GetUserWithCollections_Call {
-	return &MockCollectorClient_GetUserWithCollections_Call{Call: _e.mock.On("GetUserWithCollections", reqData)}
+// GetUserCollections is a helper method to define mock.On call
+//   - ctx
+func (_e *MockCollectorClient_Expecter) GetUserCollections(ctx interface{}) *MockCollectorClient_GetUserCollections_Call {
+	return &MockCollectorClient_GetUserCollections_Call{Call: _e.mock.On("GetUserCollections", ctx)}
 }
 
-func (_c *MockCollectorClient_GetUserWithCollections_Call) Run(run func(reqData *collector.GetCollectionsRequest)) *MockCollectorClient_GetUserWithCollections_Call {
+func (_c *MockCollectorClient_GetUserCollections_Call) Run(run func(ctx context.Context)) *MockCollectorClient_GetUserCollections_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*collector.GetCollectionsRequest))
+		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *MockCollectorClient_GetUserWithCollections_Call) Return(getCollectionsResponse *collector.GetCollectionsResponse, err error) *MockCollectorClient_GetUserWithCollections_Call {
-	_c.Call.Return(getCollectionsResponse, err)
+func (_c *MockCollectorClient_GetUserCollections_Call) Return(collections1 []collections.Collection, err error) *MockCollectorClient_GetUserCollections_Call {
+	_c.Call.Return(collections1, err)
 	return _c
 }
 
-func (_c *MockCollectorClient_GetUserWithCollections_Call) RunAndReturn(run func(reqData *collector.GetCollectionsRequest) (*collector.GetCollectionsResponse, error)) *MockCollectorClient_GetUserWithCollections_Call {
+func (_c *MockCollectorClient_GetUserCollections_Call) RunAndReturn(run func(ctx context.Context) ([]collections.Collection, error)) *MockCollectorClient_GetUserCollections_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RegisterUser provides a mock function for the type MockCollectorClient
-func (_mock *MockCollectorClient) RegisterUser(reqData *collector.RegisterRequest) (*collector.RegisterResponse, error) {
+func (_mock *MockCollectorClient) RegisterUser(reqData *auth.RegisterRequest) (*auth.RegisterResponse, error) {
 	ret := _mock.Called(reqData)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RegisterUser")
 	}
 
-	var r0 *collector.RegisterResponse
+	var r0 *auth.RegisterResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(*collector.RegisterRequest) (*collector.RegisterResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(*auth.RegisterRequest) (*auth.RegisterResponse, error)); ok {
 		return returnFunc(reqData)
 	}
-	if returnFunc, ok := ret.Get(0).(func(*collector.RegisterRequest) *collector.RegisterResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(*auth.RegisterRequest) *auth.RegisterResponse); ok {
 		r0 = returnFunc(reqData)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*collector.RegisterResponse)
+			r0 = ret.Get(0).(*auth.RegisterResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(*collector.RegisterRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(*auth.RegisterRequest) error); ok {
 		r1 = returnFunc(reqData)
 	} else {
 		r1 = ret.Error(1)
@@ -288,34 +293,34 @@ func (_e *MockCollectorClient_Expecter) RegisterUser(reqData interface{}) *MockC
 	return &MockCollectorClient_RegisterUser_Call{Call: _e.mock.On("RegisterUser", reqData)}
 }
 
-func (_c *MockCollectorClient_RegisterUser_Call) Run(run func(reqData *collector.RegisterRequest)) *MockCollectorClient_RegisterUser_Call {
+func (_c *MockCollectorClient_RegisterUser_Call) Run(run func(reqData *auth.RegisterRequest)) *MockCollectorClient_RegisterUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*collector.RegisterRequest))
+		run(args[0].(*auth.RegisterRequest))
 	})
 	return _c
 }
 
-func (_c *MockCollectorClient_RegisterUser_Call) Return(registerResponse *collector.RegisterResponse, err error) *MockCollectorClient_RegisterUser_Call {
+func (_c *MockCollectorClient_RegisterUser_Call) Return(registerResponse *auth.RegisterResponse, err error) *MockCollectorClient_RegisterUser_Call {
 	_c.Call.Return(registerResponse, err)
 	return _c
 }
 
-func (_c *MockCollectorClient_RegisterUser_Call) RunAndReturn(run func(reqData *collector.RegisterRequest) (*collector.RegisterResponse, error)) *MockCollectorClient_RegisterUser_Call {
+func (_c *MockCollectorClient_RegisterUser_Call) RunAndReturn(run func(reqData *auth.RegisterRequest) (*auth.RegisterResponse, error)) *MockCollectorClient_RegisterUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RenameCollection provides a mock function for the type MockCollectorClient
-func (_mock *MockCollectorClient) RenameCollection(reqData *collector.RenameCollectionRequest) error {
-	ret := _mock.Called(reqData)
+func (_mock *MockCollectorClient) RenameCollection(ctx context.Context, collectionID string, req *collections.RenameCollectionRequest) error {
+	ret := _mock.Called(ctx, collectionID, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RenameCollection")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(*collector.RenameCollectionRequest) error); ok {
-		r0 = returnFunc(reqData)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *collections.RenameCollectionRequest) error); ok {
+		r0 = returnFunc(ctx, collectionID, req)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -328,14 +333,16 @@ type MockCollectorClient_RenameCollection_Call struct {
 }
 
 // RenameCollection is a helper method to define mock.On call
-//   - reqData
-func (_e *MockCollectorClient_Expecter) RenameCollection(reqData interface{}) *MockCollectorClient_RenameCollection_Call {
-	return &MockCollectorClient_RenameCollection_Call{Call: _e.mock.On("RenameCollection", reqData)}
+//   - ctx
+//   - collectionID
+//   - req
+func (_e *MockCollectorClient_Expecter) RenameCollection(ctx interface{}, collectionID interface{}, req interface{}) *MockCollectorClient_RenameCollection_Call {
+	return &MockCollectorClient_RenameCollection_Call{Call: _e.mock.On("RenameCollection", ctx, collectionID, req)}
 }
 
-func (_c *MockCollectorClient_RenameCollection_Call) Run(run func(reqData *collector.RenameCollectionRequest)) *MockCollectorClient_RenameCollection_Call {
+func (_c *MockCollectorClient_RenameCollection_Call) Run(run func(ctx context.Context, collectionID string, req *collections.RenameCollectionRequest)) *MockCollectorClient_RenameCollection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*collector.RenameCollectionRequest))
+		run(args[0].(context.Context), args[1].(string), args[2].(*collections.RenameCollectionRequest))
 	})
 	return _c
 }
@@ -345,7 +352,7 @@ func (_c *MockCollectorClient_RenameCollection_Call) Return(err error) *MockColl
 	return _c
 }
 
-func (_c *MockCollectorClient_RenameCollection_Call) RunAndReturn(run func(reqData *collector.RenameCollectionRequest) error) *MockCollectorClient_RenameCollection_Call {
+func (_c *MockCollectorClient_RenameCollection_Call) RunAndReturn(run func(ctx context.Context, collectionID string, req *collections.RenameCollectionRequest) error) *MockCollectorClient_RenameCollection_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/state"
+	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/collections"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
@@ -29,7 +30,7 @@ type CollectionHandler struct {
 
 type CollectionUsecase interface {
 	GetCollecionsList(ctx context.Context) ([]string, error)
-	CreateaCollection(ctx context.Context, name string) error
+	CreateaCollection(ctx context.Context, name string) (*collections.Collection, error)
 	RenameCollection(ctx context.Context, oldName, newName string) error
 	DeleteCollection(ctx context.Context, name string) error
 }
@@ -71,7 +72,7 @@ func (h *CollectionHandler) CreateCollectionResponse(ctx context.Context, b *bot
 		return
 	}
 
-	err := h.usecase.CreateaCollection(ctx, collectionName)
+	_, err := h.usecase.CreateaCollection(ctx, collectionName)
 	if err != nil {
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,

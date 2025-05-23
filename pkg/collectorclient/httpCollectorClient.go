@@ -2,14 +2,15 @@ package collectorclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"github.com/ShenokZlob/collector-ouphe/pkg/authctx"
 	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/auth"
 	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/collections"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
-	"github.com/gin-gonic/gin"
 )
 
 type HTTPCollectorClient struct {
@@ -83,9 +84,9 @@ func (c *HTTPCollectorClient) RegisterUser(reqdata *auth.RegisterRequest) (*auth
 // GetCollections gets list of collections for user
 // Need JWT token for this opperation
 // Authorization: Bearer TOKEN
-func (c *HTTPCollectorClient) GetUserCollections(ctx *gin.Context) ([]collections.Collection, error) {
-	token := ctx.GetHeader("Authorization")
-	if token == "" {
+func (c *HTTPCollectorClient) GetUserCollections(ctx context.Context) ([]collections.Collection, error) {
+	token, ok := authctx.GetJWT(ctx)
+	if !ok || token == "" {
 		c.Log.Error("Authorization token is missing")
 		return nil, fmt.Errorf("authorization token is missing")
 	}
@@ -118,9 +119,9 @@ func (c *HTTPCollectorClient) GetUserCollections(ctx *gin.Context) ([]collection
 }
 
 // Need JWT token for this opperation
-func (c *HTTPCollectorClient) CreateCollection(ctx *gin.Context, req *collections.CreateCollectionRequest) (*collections.Collection, error) {
-	token := ctx.GetHeader("Authorization")
-	if token == "" {
+func (c *HTTPCollectorClient) CreateCollection(ctx context.Context, req *collections.CreateCollectionRequest) (*collections.Collection, error) {
+	token, ok := authctx.GetJWT(ctx)
+	if !ok || token == "" {
 		c.Log.Error("Authorization token is missing")
 		return nil, fmt.Errorf("authorization token is missing")
 	}
@@ -165,9 +166,9 @@ func (c *HTTPCollectorClient) CreateCollection(ctx *gin.Context, req *collection
 }
 
 // Need JWT token for this opperation
-func (c *HTTPCollectorClient) RenameCollection(ctx *gin.Context, collectionID string, req *collections.RenameCollectionRequest) error {
-	token := ctx.GetHeader("Authorization")
-	if token == "" {
+func (c *HTTPCollectorClient) RenameCollection(ctx context.Context, collectionID string, req *collections.RenameCollectionRequest) error {
+	token, ok := authctx.GetJWT(ctx)
+	if !ok || token == "" {
 		c.Log.Error("Authorization token is missing")
 		return fmt.Errorf("authorization token is missing")
 	}
@@ -204,9 +205,9 @@ func (c *HTTPCollectorClient) RenameCollection(ctx *gin.Context, collectionID st
 }
 
 // Need JWT token for this opperation
-func (c *HTTPCollectorClient) DeleteCollection(ctx *gin.Context, collectionID string) error {
-	token := ctx.GetHeader("Authorization")
-	if token == "" {
+func (c *HTTPCollectorClient) DeleteCollection(ctx context.Context, collectionID string) error {
+	token, ok := authctx.GetJWT(ctx)
+	if !ok || token == "" {
 		c.Log.Error("Authorization token is missing")
 		return fmt.Errorf("authorization token is missing")
 	}
