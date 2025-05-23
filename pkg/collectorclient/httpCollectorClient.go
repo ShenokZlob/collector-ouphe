@@ -84,7 +84,7 @@ func (c *HTTPCollectorClient) RegisterUser(reqdata *collector.RegisterRequest) (
 func (c *HTTPCollectorClient) GetUserWithCollections(reqData *collector.GetCollectionsRequest) (*collector.GetCollectionsResponse, error) {
 	c.Log.Info("Get user's list of collections", logger.String("token", reqData.Token))
 
-	request, err := http.NewRequest(http.MethodGet, c.URL+"collections", nil)
+	request, err := http.NewRequest(http.MethodGet, c.URL+"/collections", nil)
 	if err != nil {
 		c.Log.Error("Failed to create request", logger.Error(err))
 		return nil, err
@@ -112,7 +112,7 @@ func (c *HTTPCollectorClient) GetUserWithCollections(reqData *collector.GetColle
 // Need JWT token for this opperation
 func (c *HTTPCollectorClient) CreateCollection(reqData *collector.CreateCollectionRequest) (*collector.CreateCollectionResponse, error) {
 	// doesn't look good to logging this information!!!
-	c.Log.Info("Delete collection", logger.String("token_auth", reqData.Token))
+	c.Log.Info("Create collection", logger.String("token_auth", reqData.Token))
 
 	var collectionName = struct {
 		Name string `json:"name"`

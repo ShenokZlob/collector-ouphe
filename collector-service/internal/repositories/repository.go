@@ -10,6 +10,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type Repository struct {
@@ -120,11 +121,11 @@ func (r Repository) CreateCollection(collection *models.Collection) (*models.Col
 	return collection, nil
 }
 
-func (r Repository) RenameCollection(collection *models.Collection) *models.ResponseErr {
+func (r Repository) RenameCollection(collection *models.Collection) (*models.Collection, *models.ResponseErr) {
 	collectionRef := r.client.Database(database).Collection(collections_collection)
 	objectId, err := bson.ObjectIDFromHex(collection.ID)
 	if err != nil {
-		return &models.ResponseErr{
+		return nil, &models.ResponseErr{
 			Status:  http.StatusBadRequest,
 			Message: "Invalid collection ID format",
 		}
@@ -133,15 +134,24 @@ func (r Repository) RenameCollection(collection *models.Collection) *models.Resp
 	filter := bson.D{{Key: "_id", Value: objectId}}
 	update := bson.D{{Key: "$set", Value: bson.D{{Key: "name", Value: collection.Name}}}}
 
-	_, err = collectionRef.UpdateOne(context.TODO(), filter, update)
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+
+	var updated models.Collection
+	err = collectionRef.FindOneAndUpdate(context.TODO(), filter, update, opts).Decode(&updated)
 	if err != nil {
-		return &models.ResponseErr{
+		if err == mongo.ErrNoDocuments {
+			return nil, &models.ResponseErr{
+				Status:  http.StatusNotFound,
+				Message: "Collection not found",
+			}
+		}
+		return nil, &models.ResponseErr{
 			Status:  http.StatusInternalServerError,
-			Message: fmt.Sprintf("Update collection error: %v", err),
+			Message: fmt.Sprintf("Error updating collection: %v", err),
 		}
 	}
 
-	return nil
+	return &updated, nil
 }
 
 func (r Repository) DeleteCollection(collection *models.Collection) *models.ResponseErr {

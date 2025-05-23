@@ -1,0 +1,461 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Сервис сбора и анализа данных Collector Ouphe",
+        "title": "Collector Ouphe API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/collections": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Получить список коллекций текущего пользователя",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Collections"
+                ],
+                "summary": "Get user's collections",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/collections.Collection"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/collections.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создать новую коллекцию с указанным именем",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Collections"
+                ],
+                "summary": "Create new collection",
+                "parameters": [
+                    {
+                        "description": "Название новой коллекции",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/collections.CreateCollectionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/collections.Collection"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/collections.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/collections.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/collections/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Удалить коллекцию по ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Collections"
+                ],
+                "summary": "Delete collection",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/collections.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/collections.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Переименовать коллекцию по ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Collections"
+                ],
+                "summary": "Rename collection",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Новое имя коллекции",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/collections.RenameCollectionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/collections.Collection"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/collections.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/collections.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/collections.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "description": "Логин по Telegram ID, возвращает JWT",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login user",
+                "parameters": [
+                    {
+                        "description": "Telegram ID для логина",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.CheckUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auth.CheckUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ResponseErr"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ResponseErr"
+                        }
+                    }
+                }
+            }
+        },
+        "/register": {
+            "post": {
+                "description": "Регистрация пользователя, возвращает JWT",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Register user",
+                "parameters": [
+                    {
+                        "description": "Данные для регистрации",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.RegisterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/auth.RegisterResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ResponseErr"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/telegram/{telegram_id}": {
+            "get": {
+                "description": "Проверяет существование пользователя и возвращает JWT",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Check user by Telegram ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Telegram ID",
+                        "name": "telegram_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/auth.CheckUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ResponseErr"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ResponseErr"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "auth.CheckUserRequest": {
+            "description": "Запрос для проверки существующего пользователя по Telegram ID",
+            "type": "object",
+            "required": [
+                "telegram_id"
+            ],
+            "properties": {
+                "telegram_id": {
+                    "type": "integer",
+                    "example": 123456789
+                }
+            }
+        },
+        "auth.CheckUserResponse": {
+            "description": "Ответ с токеном и флагом успеха",
+            "type": "object",
+            "properties": {
+                "success": {
+                    "type": "boolean"
+                },
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbG..."
+                }
+            }
+        },
+        "auth.RegisterRequest": {
+            "description": "Регистрация пользователя по Telegram ID и данным профиля",
+            "type": "object",
+            "required": [
+                "first_name",
+                "telegram_id"
+            ],
+            "properties": {
+                "first_name": {
+                    "type": "string",
+                    "example": "Ivan"
+                },
+                "last_name": {
+                    "type": "string",
+                    "example": "Ivanov"
+                },
+                "telegram_id": {
+                    "type": "integer",
+                    "example": 123456789
+                },
+                "username": {
+                    "type": "string",
+                    "example": "ivan123"
+                }
+            }
+        },
+        "auth.RegisterResponse": {
+            "description": "Ответ с JWT-токеном",
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbG..."
+                }
+            }
+        },
+        "collections.Collection": {
+            "description": "Модель коллекции с ID и именем",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "64a9b66b2db8b91234a6e8e3"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "My cool collection"
+                }
+            }
+        },
+        "collections.CreateCollectionRequest": {
+            "description": "Запрос для создания коллекции с указанным именем",
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "My cool collection"
+                }
+            }
+        },
+        "collections.ErrorResponse": {
+            "description": "Структура ответа при ошибке",
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "unauthorized"
+                }
+            }
+        },
+        "collections.RenameCollectionRequest": {
+            "description": "Запрос для изменения названия коллекции",
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "Renamed collection"
+                }
+            }
+        },
+        "models.ResponseErr": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

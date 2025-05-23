@@ -13,7 +13,7 @@ type CollectionsService struct {
 type CollectionsRepositorer interface {
 	UsersCollections(userId string) ([]*models.UserCollectionRef, *models.ResponseErr)
 	CreateCollection(collection *models.Collection) (*models.Collection, *models.ResponseErr)
-	RenameCollection(collection *models.Collection) *models.ResponseErr
+	RenameCollection(collection *models.Collection) (*models.Collection, *models.ResponseErr)
 	DeleteCollection(collection *models.Collection) *models.ResponseErr
 }
 
@@ -32,7 +32,7 @@ func (cs CollectionsService) CreateCollection(collection *models.Collection) (*m
 	return cs.collectionRepository.CreateCollection(collection)
 }
 
-func (cs CollectionsService) RenameCollection(collecion *models.Collection) *models.ResponseErr {
+func (cs CollectionsService) RenameCollection(collecion *models.Collection) (*models.Collection, *models.ResponseErr) {
 	return cs.collectionRepository.RenameCollection(collecion)
 }
 

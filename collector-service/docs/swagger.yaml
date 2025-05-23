@@ -1,0 +1,303 @@
+definitions:
+  auth.CheckUserRequest:
+    description: Запрос для проверки существующего пользователя по Telegram ID
+    properties:
+      telegram_id:
+        example: 123456789
+        type: integer
+    required:
+    - telegram_id
+    type: object
+  auth.CheckUserResponse:
+    description: Ответ с токеном и флагом успеха
+    properties:
+      success:
+        type: boolean
+      token:
+        example: eyJhbG...
+        type: string
+    type: object
+  auth.RegisterRequest:
+    description: Регистрация пользователя по Telegram ID и данным профиля
+    properties:
+      first_name:
+        example: Ivan
+        type: string
+      last_name:
+        example: Ivanov
+        type: string
+      telegram_id:
+        example: 123456789
+        type: integer
+      username:
+        example: ivan123
+        type: string
+    required:
+    - first_name
+    - telegram_id
+    type: object
+  auth.RegisterResponse:
+    description: Ответ с JWT-токеном
+    properties:
+      token:
+        example: eyJhbG...
+        type: string
+    type: object
+  collections.Collection:
+    description: Модель коллекции с ID и именем
+    properties:
+      id:
+        example: 64a9b66b2db8b91234a6e8e3
+        type: string
+      name:
+        example: My cool collection
+        type: string
+    type: object
+  collections.CreateCollectionRequest:
+    description: Запрос для создания коллекции с указанным именем
+    properties:
+      name:
+        example: My cool collection
+        type: string
+    required:
+    - name
+    type: object
+  collections.ErrorResponse:
+    description: Структура ответа при ошибке
+    properties:
+      message:
+        example: unauthorized
+        type: string
+    type: object
+  collections.RenameCollectionRequest:
+    description: Запрос для изменения названия коллекции
+    properties:
+      name:
+        example: Renamed collection
+        type: string
+    required:
+    - name
+    type: object
+  models.ResponseErr:
+    properties:
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+info:
+  contact: {}
+  description: Сервис сбора и анализа данных Collector Ouphe
+  title: Collector Ouphe API
+  version: "1.0"
+paths:
+  /collections:
+    get:
+      description: Получить список коллекций текущего пользователя
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/collections.Collection'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/collections.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user's collections
+      tags:
+      - Collections
+    post:
+      consumes:
+      - application/json
+      description: Создать новую коллекцию с указанным именем
+      parameters:
+      - description: Название новой коллекции
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/collections.CreateCollectionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/collections.Collection'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/collections.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/collections.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create new collection
+      tags:
+      - Collections
+  /collections/{id}:
+    delete:
+      description: Удалить коллекцию по ID
+      parameters:
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/collections.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/collections.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete collection
+      tags:
+      - Collections
+    patch:
+      consumes:
+      - application/json
+      description: Переименовать коллекцию по ID
+      parameters:
+      - description: Collection ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Новое имя коллекции
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/collections.RenameCollectionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/collections.Collection'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/collections.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/collections.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/collections.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Rename collection
+      tags:
+      - Collections
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Логин по Telegram ID, возвращает JWT
+      parameters:
+      - description: Telegram ID для логина
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/auth.CheckUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.CheckUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ResponseErr'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ResponseErr'
+      summary: Login user
+      tags:
+      - Auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Регистрация пользователя, возвращает JWT
+      parameters:
+      - description: Данные для регистрации
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/auth.RegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ResponseErr'
+      summary: Register user
+      tags:
+      - Auth
+  /user/telegram/{telegram_id}:
+    get:
+      consumes:
+      - application/json
+      description: Проверяет существование пользователя и возвращает JWT
+      parameters:
+      - description: Telegram ID
+        in: path
+        name: telegram_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.CheckUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.ResponseErr'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/models.ResponseErr'
+      summary: Check user by Telegram ID
+      tags:
+      - Auth
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

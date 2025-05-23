@@ -6,11 +6,15 @@ import (
 	"time"
 
 	"github.com/ShenokZlob/collector-ouphe/collector-service/internal/models"
+	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/auth"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// AuthController отвечает за регистрацию, логин и проверку пользователя
+// @Tags Auth
+// @BasePath /
 type AuthController struct {
 	authService AuthServicer
 	log         logger.Logger
@@ -36,19 +40,32 @@ func NewAuthController(authService AuthServicer, log logger.Logger) *AuthControl
 	}
 }
 
+// @Summary     Register user
+// @Description Регистрация пользователя, возвращает JWT
+// @Tags        Auth
+// @Accept      json
+// @Produce     json
+// @Param       input body auth.RegisterRequest true "Данные для регистрации"
+// @Success     201 {object} auth.RegisterResponse
+// @Failure     400 {object} models.ResponseErr
+// @Router      /register [post]
 func (ac AuthController) Register(ctx *gin.Context) {
-	ac.log.With(logger.String("method", "Register")).Info("registering user")
-
-	var user models.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
+	var req auth.RegisterRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ac.log.Error("failed to bind json", logger.String("error", err.Error()))
-		ctx.AbortWithError(http.StatusBadRequest, err)
+		ctx.JSON(http.StatusBadRequest, models.ResponseErr{Message: err.Error()})
 		return
 	}
 
-	createdUser, respErr := ac.authService.Register(&user)
+	userModel := &models.User{
+		TelegramID: req.TelegramID,
+		FirstName:  req.FirstName,
+		LastName:   req.LastName,
+		Username:   req.Username,
+	}
+	createdUser, respErr := ac.authService.Register(userModel)
 	if respErr != nil {
-		ctx.AbortWithStatusJSON(respErr.Status, respErr)
+		ctx.JSON(respErr.Status, respErr)
 		return
 	}
 
@@ -59,74 +76,74 @@ func (ac AuthController) Register(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{
-		"user": UserResponse{
-			ID:         createdUser.ID,
-			TelegramID: createdUser.TelegramID,
-			FirstName:  createdUser.FirstName,
-			Username:   createdUser.Username,
-		},
-		"token": token,
-	})
+	ctx.JSON(http.StatusCreated, auth.RegisterResponse{Token: token})
 }
 
+// @Summary     Check user by Telegram ID
+// @Description Проверяет существование пользователя и возвращает JWT
+// @Tags        Auth
+// @Accept      json
+// @Produce     json
+// @Param       telegram_id path int true "Telegram ID"
+// @Success     200 {object} auth.CheckUserResponse
+// @Failure     400,404 {object} models.ResponseErr
+// @Router      /user/telegram/{telegram_id} [get]
 func (ac AuthController) Who(ctx *gin.Context) {
-	ac.log.With(logger.String("method", "Who")).Info("getting user by telegram ID")
-
-	userTelegramId := ctx.Param("telegram_id")
-	if userTelegramId == "" {
-		ac.log.Error("telegram ID is empty", logger.String("error", "telegram ID is empty"))
-		ctx.AbortWithStatus(http.StatusBadRequest)
-		return
-	}
-
-	user, respErr := ac.authService.Who(userTelegramId)
+	telegramID := ctx.Param("telegram_id")
+	user, respErr := ac.authService.Who(telegramID)
 	if respErr != nil {
-		ctx.AbortWithStatusJSON(respErr.Status, respErr)
+		ctx.JSON(respErr.Status, respErr)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, UserResponse{
-		ID:         user.ID,
-		TelegramID: user.TelegramID,
-		FirstName:  user.FirstName,
-		Username:   user.Username,
-	})
-}
-
-func (ac AuthController) Login(ctx *gin.Context) {
-	ac.log.With(logger.String("method", "Login")).Info("logging in user")
-
-	var user models.User
-	if err := ctx.ShouldBindJSON(&user); err != nil {
-		ac.log.Error("failed to bind json", logger.String("error", err.Error()))
-		ctx.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-
-	respErr := ac.authService.Login(&user)
-	if respErr != nil {
-		ctx.AbortWithStatusJSON(respErr.Status, respErr)
-		return
-	}
-
-	token, err := generateToken(&user)
+	token, err := generateToken(user)
 	if err != nil {
 		ac.log.Error("failed to generate token", logger.String("error", err.Error()))
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"token":   token,
-		"success": true,
-	})
+	ctx.JSON(http.StatusOK, auth.CheckUserResponse{Token: token, Success: true})
+}
+
+// @Summary     Login user
+// @Description Логин по Telegram ID, возвращает JWT
+// @Tags        Auth
+// @Accept      json
+// @Produce     json
+// @Param       input body auth.CheckUserRequest true "Telegram ID для логина"
+// @Success     200 {object} auth.CheckUserResponse
+// @Failure     400,401 {object} models.ResponseErr
+// @Router      /login [post]
+func (ac AuthController) Login(ctx *gin.Context) {
+	var req auth.CheckUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ac.log.Error("failed to bind json", logger.String("error", err.Error()))
+		ctx.JSON(http.StatusBadRequest, models.ResponseErr{Message: err.Error()})
+		return
+	}
+
+	userModel := &models.User{TelegramID: req.TelegramID}
+	respErr := ac.authService.Login(userModel)
+	if respErr != nil {
+		ctx.JSON(respErr.Status, respErr)
+		return
+	}
+
+	token, err := generateToken(userModel)
+	if err != nil {
+		ac.log.Error("failed to generate token", logger.String("error", err.Error()))
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, auth.CheckUserResponse{Token: token, Success: true})
 }
 
 func generateToken(user *models.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": user.ID,
-		"exp":     time.Now().Add(time.Hour * 72).Unix(),
+		"exp":     time.Now().Add(72 * time.Hour).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
