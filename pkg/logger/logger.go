@@ -7,6 +7,7 @@ import (
 type Logger interface {
 	Info(msg string, fields ...Field)
 	Error(msg string, fields ...Field)
+	Warning(msg string, fields ...Field)
 	With(fields ...Field) Logger
 	Sync() error
 }
@@ -36,6 +37,10 @@ func (zl *zapLogger) Info(msg string, fields ...Field) {
 
 func (zl *zapLogger) Error(msg string, fields ...Field) {
 	zl.l.Error(msg, toZapFields(fields)...)
+}
+
+func (zl *zapLogger) Warning(msg string, fields ...Field) {
+	zl.l.Warn(msg, toZapFields(fields)...)
 }
 
 func (zl *zapLogger) With(fields ...Field) Logger {

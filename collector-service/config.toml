@@ -3,7 +3,7 @@
 # HTTP server configuration
 # The address and port on which the HTTP server will listen
 [server_http]
-host = "localhost:8080"
+host = "0.0.0.0:8080"
 
 # MongoDB connection string
 # The connection string to connect to the MongoDB database
