@@ -6,6 +6,8 @@ import (
 	authHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/handler"
 	authUsecase "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/usecase"
 	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/cache"
+	cardsearchHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/cardsearch/handler"
+	cardsearchUsecase "github.com/ShenokZlob/collector-ouphe/bot-service/internal/cardsearch/usecase"
 	collectionHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/collection/handler"
 	collectionUsecase "github.com/ShenokZlob/collector-ouphe/bot-service/internal/collection/usecase"
 	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/state"
@@ -39,6 +41,10 @@ func NewAppBot(token string, collectorURL string, log logger.Logger, cache *cach
 	collUse := collectionUsecase.NewCollectionUsecaseImpl(log, collectorClient)
 	collHand := collectionHandler.NewCollectionHandler(collUse, mgr, log)
 
+	// Card Search
+	csUse := cardsearchUsecase.NewCardSearchUsecaseImpl(log)
+	csHand := cardsearchHandler.NewCardSearchHandler(log, csUse)
+
 	// Bot options
 	opts := []bot.Option{
 		bot.WithMiddlewares(authHand.RegistrationMiddleware, state.Middleware(mgr)),
@@ -52,6 +58,7 @@ func NewAppBot(token string, collectorURL string, log logger.Logger, cache *cach
 
 	// Init commands panel
 	commands := []models.BotCommand{
+		{Command: "search", Description: "Search for a card /command <card name>"},
 		{Command: "collections", Description: "View your collection's list"},
 		{Command: "collection_new", Description: "Create new collection /command <name>"},
 		{Command: "collection_rename", Description: "Rename collection /command <old name> <new name>"},
@@ -80,6 +87,9 @@ func NewAppBot(token string, collectorURL string, log logger.Logger, cache *cach
 	b.RegisterHandler(bot.HandlerTypeMessageText, "/collection_new", bot.MatchTypeExact, collHand.CreateCollectionCommand)
 	b.RegisterHandler(bot.HandlerTypeMessageText, "/collection_rename", bot.MatchTypeExact, collHand.RenameCollectionCommand)
 	b.RegisterHandler(bot.HandlerTypeMessageText, "/collection_delete", bot.MatchTypeExact, collHand.DeleteCollectionCommand)
+
+	// Card Search
+	b.RegisterHandler(bot.HandlerTypeMessageText, "/search", bot.MatchTypeExact, csHand.HandleSearchCommand)
 
 	return &AppBot{
 		bot:          b,
