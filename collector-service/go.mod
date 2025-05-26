@@ -15,6 +15,8 @@ require (
 	go.mongodb.org/mongo-driver/v2 v2.1.0
 )
 
+replace github.com/ShenokZlob/collector-ouphe/pkg => ../pkg
+
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/bytedance/sonic v1.13.2 // indirect

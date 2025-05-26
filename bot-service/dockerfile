@@ -1,19 +1,20 @@
-
 FROM golang:1.24-alpine AS builder
 
-WORKDIR /app/bot-service
+WORKDIR /app
 
-COPY bot-service/go.mod bot-service/go.sum ./
+COPY pkg/ ./pkg/
+COPY bot-service/go.mod bot-service/go.sum ./bot-service/
+
+WORKDIR /app/bot-service
 RUN go mod download
 
-
-COPY bot-service/ ./
-COPY pkg/ ../pkg/
+COPY bot-service/ .
 
 RUN go build -o bot-service cmd/main.go
 
-
 FROM alpine:latest
+
+RUN apk add --no-cache ca-certificates
 
 WORKDIR /root/
 
