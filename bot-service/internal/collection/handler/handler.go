@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/state"
+	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/session"
 	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/collections"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/go-telegram/bot"
@@ -24,7 +24,7 @@ const (
 
 type CollectionHandler struct {
 	usecase CollectionUsecase
-	mgr     state.Manager
+	mgr     session.Manager
 	log     logger.Logger
 }
 
@@ -35,7 +35,7 @@ type CollectionUsecase interface {
 	DeleteCollection(ctx context.Context, name string) error
 }
 
-func NewCollectionHandler(usecase CollectionUsecase, mgr state.Manager, log logger.Logger) *CollectionHandler {
+func NewCollectionHandler(usecase CollectionUsecase, mgr session.Manager, log logger.Logger) *CollectionHandler {
 	return &CollectionHandler{
 		usecase: usecase,
 		mgr:     mgr,
@@ -47,7 +47,7 @@ func NewCollectionHandler(usecase CollectionUsecase, mgr state.Manager, log logg
 func (h *CollectionHandler) CreateCollectionCommand(ctx context.Context, b *bot.Bot, update *models.Update) {
 	h.log.Info("CreateCollectionCommand executing")
 
-	ctx = state.WithState(ctx, string(stateCreateCollectionCommand))
+	ctx = session.WithState(ctx, string(stateCreateCollectionCommand))
 
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
@@ -56,7 +56,7 @@ func (h *CollectionHandler) CreateCollectionCommand(ctx context.Context, b *bot.
 }
 
 func (h *CollectionHandler) CreateCollectionResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
-	st, _ := state.GetState(ctx)
+	st, _ := session.GetState(ctx)
 	h.log.Info("CreateCollectionResponse executing", logger.String("state", st))
 	if st != string(stateCreateCollectionCommand) {
 		return
@@ -126,7 +126,7 @@ func onInlineKeyboardSelect(ctx context.Context, b *bot.Bot, mes models.MaybeIna
 func (h *CollectionHandler) RenameCollectionCommand(ctx context.Context, b *bot.Bot, update *models.Update) {
 	h.log.Info("RenameCollectionCommand executing")
 
-	ctx = state.WithState(ctx, string(stateRenameCollectionCommand))
+	ctx = session.WithState(ctx, string(stateRenameCollectionCommand))
 
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
@@ -135,7 +135,7 @@ func (h *CollectionHandler) RenameCollectionCommand(ctx context.Context, b *bot.
 }
 
 func (h *CollectionHandler) RenameCollectionResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
-	st, _ := state.GetState(ctx)
+	st, _ := session.GetState(ctx)
 	h.log.Info("RenameCollectionResponse executing", logger.String("state", st))
 	if st != string(stateRenameCollectionCommand) {
 		return
@@ -179,7 +179,7 @@ func (h *CollectionHandler) RenameCollectionResponse(ctx context.Context, b *bot
 func (h *CollectionHandler) DeleteCollectionCommand(ctx context.Context, b *bot.Bot, update *models.Update) {
 	h.log.Info("DeleteCollectionCommand executing")
 
-	ctx = state.WithState(ctx, string(stateDeleteCollectionCommand))
+	ctx = session.WithState(ctx, string(stateDeleteCollectionCommand))
 
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID: update.Message.Chat.ID,
@@ -188,7 +188,7 @@ func (h *CollectionHandler) DeleteCollectionCommand(ctx context.Context, b *bot.
 }
 
 func (h *CollectionHandler) DeleteCollectionResponse(ctx context.Context, b *bot.Bot, update *models.Update) {
-	st, _ := state.GetState(ctx)
+	st, _ := session.GetState(ctx)
 	h.log.Info("DeleteCollectionResponse executing", logger.String("state", st))
 	if st != string(stateDeleteCollectionCommand) {
 		return

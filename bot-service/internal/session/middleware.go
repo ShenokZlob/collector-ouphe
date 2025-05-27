@@ -1,4 +1,4 @@
-package state
+package session
 
 import (
 	"context"
@@ -24,12 +24,19 @@ func Middleware(mgr Manager) bot.Middleware {
 	return func(next bot.HandlerFunc) bot.HandlerFunc {
 		return func(ctx context.Context, b *bot.Bot, update *models.Update) {
 			if update.Message == nil || update.Message.From == nil {
-				// next(ctx, b, update)
 				return
 			}
 
-			userID := update.Message.From.ID
-			if state, ok := mgr.GetState(userID); ok {
+			state, err := mgr.GetState(ctx, update.Message.From.ID)
+			if err != nil {
+				b.SendMessage(ctx, &bot.SendMessageParams{
+					ChatID: update.Message.Chat.ID,
+					Text:   "Что-то пошло не так, попробуйте позже.",
+				})
+				return
+			}
+
+			if state != "" {
 				ctx = WithState(ctx, state)
 			}
 
@@ -38,13 +45,13 @@ func Middleware(mgr Manager) bot.Middleware {
 	}
 }
 
-func CancelHandler(stateMgr Manager) bot.HandlerFunc {
+func CancelHandler(mgr Manager) bot.HandlerFunc {
 	return func(ctx context.Context, b *bot.Bot, update *models.Update) {
 		if update.Message == nil || update.Message.From == nil {
 			return
 		}
 
-		stateMgr.ClearState(update.Message.From.ID)
+		mgr.ClearState(ctx, update.Message.From.ID)
 
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,
