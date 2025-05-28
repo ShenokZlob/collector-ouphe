@@ -3,18 +3,19 @@ package appbot
 import (
 	"context"
 
+	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/app"
 	authHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/handler"
 	authUsecase "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/usecase"
-	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/cache"
 	cardsearchHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/cardsearch/handler"
 	cardsearchUsecase "github.com/ShenokZlob/collector-ouphe/bot-service/internal/cardsearch/usecase"
 	collectionHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/collection/handler"
 	collectionUsecase "github.com/ShenokZlob/collector-ouphe/bot-service/internal/collection/usecase"
-	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/state"
+	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/session"
 	"github.com/ShenokZlob/collector-ouphe/pkg/collectorclient"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+	"github.com/redis/go-redis/v9"
 )
 
 type AppBot struct {
@@ -23,15 +24,12 @@ type AppBot struct {
 	log          logger.Logger
 }
 
-func NewAppBot(token string, collectorURL string, log logger.Logger, cache *cache.Cache) (*AppBot, error) {
-	// State - save user's states
-	mgr := state.NewMemoryManager()
+func NewAppBot(token string, collectorURL string, log logger.Logger, redisClient *redis.Client) (*AppBot, error) {
+	// Initialize sessions
+	cache, stateMgr := app.InitSessions(redisClient)
 
 	// HTTPCollectorClient
-	collectorClient := &collectorclient.HTTPCollectorClient{
-		URL: collectorURL,
-		Log: log,
-	}
+	collectorClient := collectorclient.NewHTTPCollectorClient(collectorURL, log)
 
 	// Auth
 	authUse := authUsecase.NewAuthUsecase(log, collectorClient, cache)
@@ -39,7 +37,7 @@ func NewAppBot(token string, collectorURL string, log logger.Logger, cache *cach
 
 	// Collection
 	collUse := collectionUsecase.NewCollectionUsecaseImpl(log, collectorClient)
-	collHand := collectionHandler.NewCollectionHandler(collUse, mgr, log)
+	collHand := collectionHandler.NewCollectionHandler(collUse, stateMgr, log)
 
 	// Card Search
 	csUse := cardsearchUsecase.NewCardSearchUsecaseImpl(log)
@@ -47,7 +45,7 @@ func NewAppBot(token string, collectorURL string, log logger.Logger, cache *cach
 
 	// Bot options
 	opts := []bot.Option{
-		bot.WithMiddlewares(authHand.RegistrationMiddleware, state.Middleware(mgr)),
+		bot.WithMiddlewares(authHand.RegistrationMiddleware, session.Middleware(stateMgr)),
 		bot.WithDefaultHandler(defaultHandler),
 	}
 
@@ -77,19 +75,19 @@ func NewAppBot(token string, collectorURL string, log logger.Logger, cache *cach
 	// Initialize router
 
 	// Cancel command
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/cancel", bot.MatchTypeExact, state.CancelHandler(mgr))
+	b.RegisterHandler(bot.HandlerTypeMessageText, "/cancel", bot.MatchTypeExact, session.CancelHandler(stateMgr))
 
 	// Auth
 	b.RegisterHandler(bot.HandlerTypeMessageText, "/register", bot.MatchTypeExact, authHand.HandleRegister)
 
 	// Collection
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/collections", bot.MatchTypeExact, collHand.GetCollectionsListCommand)
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/collection_new", bot.MatchTypeExact, collHand.CreateCollectionCommand)
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/collection_rename", bot.MatchTypeExact, collHand.RenameCollectionCommand)
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/collection_delete", bot.MatchTypeExact, collHand.DeleteCollectionCommand)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "collections", bot.MatchTypeCommand, collHand.GetCollectionsListCommand)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "collection_new", bot.MatchTypeCommand, collHand.CreateCollectionCommand)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "collection_rename", bot.MatchTypeCommand, collHand.RenameCollectionCommand)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "collection_delete", bot.MatchTypeCommand, collHand.DeleteCollectionCommand)
 
 	// Card Search
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/search", bot.MatchTypeExact, csHand.HandleSearchCommand)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "search", bot.MatchTypeCommand, csHand.HandleSearchCommand)
 
 	return &AppBot{
 		bot:          b,

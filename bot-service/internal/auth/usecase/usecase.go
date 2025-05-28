@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/dto"
-	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/cache"
+	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/session"
 	"github.com/ShenokZlob/collector-ouphe/pkg/collectorclient"
 	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/auth"
 
@@ -15,10 +15,10 @@ import (
 type authUsecaseImpl struct {
 	log             logger.Logger
 	collectorClient collectorclient.CollectorClientAuth
-	cache           *cache.Cache
+	cache           *session.Cache
 }
 
-func NewAuthUsecase(log logger.Logger, client collectorclient.CollectorClientAuth, cache *cache.Cache) *authUsecaseImpl {
+func NewAuthUsecase(log logger.Logger, client collectorclient.CollectorClientAuth, cache *session.Cache) *authUsecaseImpl {
 	return &authUsecaseImpl{
 		log:             log,
 		collectorClient: client,

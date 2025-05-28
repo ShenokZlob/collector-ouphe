@@ -37,22 +37,31 @@ func (_m *MockAuthServicer) EXPECT() *MockAuthServicer_Expecter {
 }
 
 // Login provides a mock function for the type MockAuthServicer
-func (_mock *MockAuthServicer) Login(user *models.User) *models.ResponseErr {
+func (_mock *MockAuthServicer) Login(user *models.User) (string, *models.ResponseErr) {
 	ret := _mock.Called(user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Login")
 	}
 
-	var r0 *models.ResponseErr
-	if returnFunc, ok := ret.Get(0).(func(*models.User) *models.ResponseErr); ok {
+	var r0 string
+	var r1 *models.ResponseErr
+	if returnFunc, ok := ret.Get(0).(func(*models.User) (string, *models.ResponseErr)); ok {
+		return returnFunc(user)
+	}
+	if returnFunc, ok := ret.Get(0).(func(*models.User) string); ok {
 		r0 = returnFunc(user)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.ResponseErr)
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(*models.User) *models.ResponseErr); ok {
+		r1 = returnFunc(user)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*models.ResponseErr)
 		}
 	}
-	return r0
+	return r0, r1
 }
 
 // MockAuthServicer_Login_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Login'
@@ -73,35 +82,33 @@ func (_c *MockAuthServicer_Login_Call) Run(run func(user *models.User)) *MockAut
 	return _c
 }
 
-func (_c *MockAuthServicer_Login_Call) Return(responseErr *models.ResponseErr) *MockAuthServicer_Login_Call {
-	_c.Call.Return(responseErr)
+func (_c *MockAuthServicer_Login_Call) Return(s string, responseErr *models.ResponseErr) *MockAuthServicer_Login_Call {
+	_c.Call.Return(s, responseErr)
 	return _c
 }
 
-func (_c *MockAuthServicer_Login_Call) RunAndReturn(run func(user *models.User) *models.ResponseErr) *MockAuthServicer_Login_Call {
+func (_c *MockAuthServicer_Login_Call) RunAndReturn(run func(user *models.User) (string, *models.ResponseErr)) *MockAuthServicer_Login_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Register provides a mock function for the type MockAuthServicer
-func (_mock *MockAuthServicer) Register(user *models.User) (*models.User, *models.ResponseErr) {
+func (_mock *MockAuthServicer) Register(user *models.User) (string, *models.ResponseErr) {
 	ret := _mock.Called(user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Register")
 	}
 
-	var r0 *models.User
+	var r0 string
 	var r1 *models.ResponseErr
-	if returnFunc, ok := ret.Get(0).(func(*models.User) (*models.User, *models.ResponseErr)); ok {
+	if returnFunc, ok := ret.Get(0).(func(*models.User) (string, *models.ResponseErr)); ok {
 		return returnFunc(user)
 	}
-	if returnFunc, ok := ret.Get(0).(func(*models.User) *models.User); ok {
+	if returnFunc, ok := ret.Get(0).(func(*models.User) string); ok {
 		r0 = returnFunc(user)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.User)
-		}
+		r0 = ret.Get(0).(string)
 	}
 	if returnFunc, ok := ret.Get(1).(func(*models.User) *models.ResponseErr); ok {
 		r1 = returnFunc(user)
@@ -131,35 +138,33 @@ func (_c *MockAuthServicer_Register_Call) Run(run func(user *models.User)) *Mock
 	return _c
 }
 
-func (_c *MockAuthServicer_Register_Call) Return(user1 *models.User, responseErr *models.ResponseErr) *MockAuthServicer_Register_Call {
-	_c.Call.Return(user1, responseErr)
+func (_c *MockAuthServicer_Register_Call) Return(s string, responseErr *models.ResponseErr) *MockAuthServicer_Register_Call {
+	_c.Call.Return(s, responseErr)
 	return _c
 }
 
-func (_c *MockAuthServicer_Register_Call) RunAndReturn(run func(user *models.User) (*models.User, *models.ResponseErr)) *MockAuthServicer_Register_Call {
+func (_c *MockAuthServicer_Register_Call) RunAndReturn(run func(user *models.User) (string, *models.ResponseErr)) *MockAuthServicer_Register_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Who provides a mock function for the type MockAuthServicer
-func (_mock *MockAuthServicer) Who(userTelegramId string) (*models.User, *models.ResponseErr) {
+func (_mock *MockAuthServicer) Who(userTelegramId string) (string, *models.ResponseErr) {
 	ret := _mock.Called(userTelegramId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Who")
 	}
 
-	var r0 *models.User
+	var r0 string
 	var r1 *models.ResponseErr
-	if returnFunc, ok := ret.Get(0).(func(string) (*models.User, *models.ResponseErr)); ok {
+	if returnFunc, ok := ret.Get(0).(func(string) (string, *models.ResponseErr)); ok {
 		return returnFunc(userTelegramId)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string) *models.User); ok {
+	if returnFunc, ok := ret.Get(0).(func(string) string); ok {
 		r0 = returnFunc(userTelegramId)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.User)
-		}
+		r0 = ret.Get(0).(string)
 	}
 	if returnFunc, ok := ret.Get(1).(func(string) *models.ResponseErr); ok {
 		r1 = returnFunc(userTelegramId)
@@ -189,12 +194,12 @@ func (_c *MockAuthServicer_Who_Call) Run(run func(userTelegramId string)) *MockA
 	return _c
 }
 
-func (_c *MockAuthServicer_Who_Call) Return(user *models.User, responseErr *models.ResponseErr) *MockAuthServicer_Who_Call {
-	_c.Call.Return(user, responseErr)
+func (_c *MockAuthServicer_Who_Call) Return(s string, responseErr *models.ResponseErr) *MockAuthServicer_Who_Call {
+	_c.Call.Return(s, responseErr)
 	return _c
 }
 
-func (_c *MockAuthServicer_Who_Call) RunAndReturn(run func(userTelegramId string) (*models.User, *models.ResponseErr)) *MockAuthServicer_Who_Call {
+func (_c *MockAuthServicer_Who_Call) RunAndReturn(run func(userTelegramId string) (string, *models.ResponseErr)) *MockAuthServicer_Who_Call {
 	_c.Call.Return(run)
 	return _c
 }

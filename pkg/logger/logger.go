@@ -2,12 +2,14 @@ package logger
 
 import (
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type Logger interface {
 	Info(msg string, fields ...Field)
 	Error(msg string, fields ...Field)
-	Warning(msg string, fields ...Field)
+	Warn(msg string, fields ...Field)
+	Debug(msg string, fields ...Field)
 	With(fields ...Field) Logger
 	Sync() error
 }
@@ -17,14 +19,23 @@ type zapLogger struct {
 }
 
 func NewZapLogger(isProduction bool) (Logger, error) {
-	var log *zap.Logger
+	var cfg zap.Config
 	var err error
 
 	if isProduction {
-		log, err = zap.NewProduction()
+		cfg = zap.NewProductionConfig()
+		cfg.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
+		cfg.EncoderConfig.TimeKey = "timestamp"
+		cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+		cfg.DisableStacktrace = true
+		cfg.EncoderConfig.StacktraceKey = ""
 	} else {
-		log, err = zap.NewDevelopment()
+		cfg = zap.NewDevelopmentConfig()
+		cfg.DisableStacktrace = true
+		cfg.EncoderConfig.StacktraceKey = ""
 	}
+
+	log, err := cfg.Build()
 	if err != nil {
 		return nil, err
 	}
@@ -39,8 +50,12 @@ func (zl *zapLogger) Error(msg string, fields ...Field) {
 	zl.l.Error(msg, toZapFields(fields)...)
 }
 
-func (zl *zapLogger) Warning(msg string, fields ...Field) {
+func (zl *zapLogger) Warn(msg string, fields ...Field) {
 	zl.l.Warn(msg, toZapFields(fields)...)
+}
+
+func (zl *zapLogger) Debug(msg string, fields ...Field) {
+	zl.l.Debug(msg, toZapFields(fields)...)
 }
 
 func (zl *zapLogger) With(fields ...Field) Logger {
