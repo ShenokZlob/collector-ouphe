@@ -19,9 +19,17 @@ type HTTPCollectorClient struct {
 	ClientHTTP *http.Client
 }
 
+func NewHTTPCollectorClient(url string, log logger.Logger) *HTTPCollectorClient {
+	return &HTTPCollectorClient{
+		URL:        url,
+		Log:        log,
+		ClientHTTP: http.DefaultClient,
+	}
+}
+
 // CheckUser checks if the user exists in the collector service
 func (c *HTTPCollectorClient) CheckUser(reqData *auth.CheckUserRequest) (*auth.CheckUserResponse, error) {
-	c.Log.Info("Checking user in collector service", logger.Int("telegram_id", int(reqData.TelegramID)))
+	c.Log.Info("Checking user in collector service", logger.String("method", "HTTPCollectorClient.CheckUser"), logger.Int("telegram_id", int(reqData.TelegramID)))
 
 	body, err := json.Marshal(reqData)
 	if err != nil {
@@ -52,7 +60,7 @@ func (c *HTTPCollectorClient) CheckUser(reqData *auth.CheckUserRequest) (*auth.C
 
 // RegisterUser reg the user in collection service
 func (c *HTTPCollectorClient) RegisterUser(reqdata *auth.RegisterRequest) (*auth.RegisterResponse, error) {
-	c.Log.Info("Registering user in collector service", logger.Int("telegram_id", int(reqdata.TelegramID)))
+	c.Log.Info("Registering user in collector service", logger.String("method", "HTTPCollectorClient.RegisterUser"), logger.Int("telegram_id", int(reqdata.TelegramID)))
 
 	body, err := json.Marshal(reqdata)
 	if err != nil {
@@ -91,7 +99,7 @@ func (c *HTTPCollectorClient) GetUserCollections(ctx context.Context) ([]collect
 		return nil, fmt.Errorf("authorization token is missing")
 	}
 
-	c.Log.Info("Get user's list of collections", logger.String("token", token))
+	c.Log.Info("Get user's list of collections", logger.String("method", "HTTPCollectorClient.GetUserCollections"), logger.String("token_auth", token))
 
 	request, err := http.NewRequest(http.MethodGet, c.URL+"/collections", nil)
 	if err != nil {
@@ -100,6 +108,7 @@ func (c *HTTPCollectorClient) GetUserCollections(ctx context.Context) ([]collect
 	}
 
 	request.Header.Set("Authorization", "Bearer "+token)
+	c.Log.Debug("Req token", logger.String("header", request.Header.Get("Authorization")))
 
 	resp, err := c.ClientHTTP.Do(request)
 	if err != nil {
@@ -107,6 +116,16 @@ func (c *HTTPCollectorClient) GetUserCollections(ctx context.Context) ([]collect
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var errorRepsonse collections.ErrorResponse
+		if err := json.NewDecoder(resp.Body).Decode(&errorRepsonse); err != nil {
+			c.Log.Error("Failed to decode error response", logger.Error(err))
+			return nil, fmt.Errorf("failed to decode error response, status code: %d", resp.StatusCode)
+		}
+		c.Log.Error("Failed to get user's collections", logger.String("message", errorRepsonse.Message))
+		return nil, fmt.Errorf("failed to get user's collections, status code: %d", resp.StatusCode)
+	}
 
 	var collections []collections.Collection
 	err = json.NewDecoder(resp.Body).Decode(&collections)
@@ -127,7 +146,7 @@ func (c *HTTPCollectorClient) CreateCollection(ctx context.Context, req *collect
 	}
 
 	// doesn't look good to logging this information!!!
-	c.Log.Info("Create collection", logger.String("token_auth", token))
+	c.Log.Info("Create collection", logger.String("metod", "HTTPCollectorClient.CreateCollection"), logger.String("token_auth", token))
 
 	body, err := json.Marshal(&req)
 	if err != nil {
@@ -151,7 +170,12 @@ func (c *HTTPCollectorClient) CreateCollection(ctx context.Context, req *collect
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		c.Log.Error("Failed to create collection's for user", logger.Int("status_code", resp.StatusCode))
+		var errorResponse collections.ErrorResponse
+		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
+			c.Log.Error("Failed to decode error response", logger.Error(err))
+			return nil, fmt.Errorf("failed to decode error response, status code: %d", resp.StatusCode)
+		}
+		c.Log.Error("Failed to create collection's for user", logger.String("message", errorResponse.Message))
 		return nil, fmt.Errorf("failed to create collection's, status code: %d", resp.StatusCode)
 	}
 
@@ -173,7 +197,7 @@ func (c *HTTPCollectorClient) RenameCollection(ctx context.Context, collectionID
 		return fmt.Errorf("authorization token is missing")
 	}
 
-	c.Log.Info("Rename collection", logger.String("collection_id", collectionID), logger.String("token_auth", token))
+	c.Log.Info("Rename collection", logger.String("collection_id", collectionID), logger.String("method", "HTTPCollectorClient.RenameCollection"), logger.String("token_auth", token))
 
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -197,7 +221,12 @@ func (c *HTTPCollectorClient) RenameCollection(ctx context.Context, collectionID
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
-		c.Log.Error("Failed to rename collection", logger.Int("status_code", resp.StatusCode))
+		var errorResponse collections.ErrorResponse
+		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
+			c.Log.Error("Failed to decode error response", logger.Error(err))
+			return fmt.Errorf("failed to decode error response, status code: %d", resp.StatusCode)
+		}
+		c.Log.Error("Failed to rename collection", logger.String("message", errorResponse.Message))
 		return fmt.Errorf("failed to rename the user's collection, status code: %d", resp.StatusCode)
 	}
 
@@ -213,7 +242,7 @@ func (c *HTTPCollectorClient) DeleteCollection(ctx context.Context, collectionID
 	}
 
 	// doesn't look good to logging this information!!!
-	c.Log.Info("Delete collection", logger.String("token_auth", token))
+	c.Log.Info("Delete collection", logger.String("method", "HTTPCollectorClient.DeleteCollection"), logger.String("token_auth", token))
 
 	request, err := http.NewRequest(http.MethodDelete, c.URL+"/collections/"+collectionID, nil)
 	if err != nil {
@@ -231,7 +260,12 @@ func (c *HTTPCollectorClient) DeleteCollection(ctx context.Context, collectionID
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
-		c.Log.Error("Failed to delete the user's collection", logger.Int("status_code", resp.StatusCode))
+		var errorResponse collections.ErrorResponse
+		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
+			c.Log.Error("Failed to decode error response", logger.Error(err))
+			return fmt.Errorf("failed to decode error response, status code: %d", resp.StatusCode)
+		}
+		c.Log.Error("Failed to delete the user's collection", logger.String("message", errorResponse.Message))
 		return fmt.Errorf("failed to delete the user's collection, status code: %d", resp.StatusCode)
 	}
 

@@ -42,14 +42,18 @@ func NewCollectionsController(collectionsService CollectionsServicer, log logger
 // @Failure     401 {object} collections.ErrorResponse
 // @Router      /collections [get]
 func (cc CollectionsController) GetCollections(ctx *gin.Context) {
-	userId, respErr := getUserIDFromKeys(ctx)
+	cc.log.Info("CollectionsController.GetCollections called")
+
+	userId, respErr := getUserFromCtx(ctx)
 	if respErr != nil {
+		cc.log.Error("Failed to get user ID from context", logger.Error(respErr))
 		ctx.AbortWithStatusJSON(respErr.Status, respErr)
 		return
 	}
 
 	list, respErr := cc.collectionsService.AllUsersCollections(userId)
 	if respErr != nil {
+		cc.log.Error("Failed to get user's collections", logger.Error(respErr))
 		ctx.AbortWithStatusJSON(respErr.Status, respErr)
 		return
 	}
@@ -72,7 +76,7 @@ func (cc CollectionsController) GetCollections(ctx *gin.Context) {
 // @Failure     400,401 {object} collections.ErrorResponse
 // @Router      /collections [post]
 func (cc CollectionsController) CreateCollection(ctx *gin.Context) {
-	userId, respErr := getUserIDFromKeys(ctx)
+	userId, respErr := getUserFromCtx(ctx)
 	if respErr != nil {
 		ctx.AbortWithStatusJSON(respErr.Status, respErr)
 		return
@@ -107,7 +111,7 @@ func (cc CollectionsController) CreateCollection(ctx *gin.Context) {
 // @Failure     400,401,404 {object} collections.ErrorResponse
 // @Router      /collections/{id} [patch]
 func (cc CollectionsController) RenameCollection(ctx *gin.Context) {
-	userId, respErr := getUserIDFromKeys(ctx)
+	userId, respErr := getUserFromCtx(ctx)
 	if respErr != nil {
 		ctx.AbortWithStatusJSON(respErr.Status, respErr)
 		return
@@ -141,7 +145,7 @@ func (cc CollectionsController) RenameCollection(ctx *gin.Context) {
 // @Failure     401,404 {object} collections.ErrorResponse
 // @Router      /collections/{id} [delete]
 func (cc CollectionsController) DeleteCollection(ctx *gin.Context) {
-	userId, respErr := getUserIDFromKeys(ctx)
+	userId, respErr := getUserFromCtx(ctx)
 	if respErr != nil {
 		ctx.AbortWithStatusJSON(respErr.Status, respErr)
 		return
@@ -157,10 +161,14 @@ func (cc CollectionsController) DeleteCollection(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-func getUserIDFromKeys(ctx *gin.Context) (string, *models.ResponseErr) {
-	userId, ok := ctx.Keys["user_id"].(string)
+func getUserFromCtx(ctx *gin.Context) (string, *models.ResponseErr) {
+	val, ok := ctx.Get("userID")
 	if !ok {
 		return "", &models.ResponseErr{Status: http.StatusUnauthorized, Message: "Invalid user ID"}
 	}
-	return userId, nil
+	userID, ok := val.(string)
+	if !ok || userID == "" {
+		return "", &models.ResponseErr{Status: http.StatusUnauthorized, Message: "Invalid user ID type"}
+	}
+	return userID, nil
 }

@@ -29,10 +29,7 @@ func NewAppBot(token string, collectorURL string, log logger.Logger, redisClient
 	cache, stateMgr := app.InitSessions(redisClient)
 
 	// HTTPCollectorClient
-	collectorClient := &collectorclient.HTTPCollectorClient{
-		URL: collectorURL,
-		Log: log,
-	}
+	collectorClient := collectorclient.NewHTTPCollectorClient(collectorURL, log)
 
 	// Auth
 	authUse := authUsecase.NewAuthUsecase(log, collectorClient, cache)
@@ -84,13 +81,13 @@ func NewAppBot(token string, collectorURL string, log logger.Logger, redisClient
 	b.RegisterHandler(bot.HandlerTypeMessageText, "/register", bot.MatchTypeExact, authHand.HandleRegister)
 
 	// Collection
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/collections", bot.MatchTypeExact, collHand.GetCollectionsListCommand)
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/collection_new", bot.MatchTypeExact, collHand.CreateCollectionCommand)
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/collection_rename", bot.MatchTypeExact, collHand.RenameCollectionCommand)
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/collection_delete", bot.MatchTypeExact, collHand.DeleteCollectionCommand)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "collections", bot.MatchTypeCommand, collHand.GetCollectionsListCommand)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "collection_new", bot.MatchTypeCommand, collHand.CreateCollectionCommand)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "collection_rename", bot.MatchTypeCommand, collHand.RenameCollectionCommand)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "collection_delete", bot.MatchTypeCommand, collHand.DeleteCollectionCommand)
 
 	// Card Search
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/search", bot.MatchTypeExact, csHand.HandleSearchCommand)
+	b.RegisterHandler(bot.HandlerTypeMessageText, "search", bot.MatchTypeCommand, csHand.HandleSearchCommand)
 
 	return &AppBot{
 		bot:          b,

@@ -25,8 +25,12 @@ func NewCollectionsService(collectionRepository CollectionsRepositorer, log logg
 }
 
 func (cs CollectionsService) AllUsersCollections(userId string) ([]*models.UserCollectionRef, *models.ResponseErr) {
+	cs.log.Info("CollectionsService.AllUsersCollections called", logger.String("userId", userId))
+
 	return cs.collectionRepository.UsersCollections(userId)
 }
+
+// TODO: add logging
 
 func (cs CollectionsService) CreateCollection(collection *models.Collection) (*models.Collection, *models.ResponseErr) {
 	return cs.collectionRepository.CreateCollection(collection)

@@ -29,7 +29,17 @@ func NewCardSearchHandler(log logger.Logger, usecase CardSearchUsecase) *CardSea
 func (h *CardSearchHandler) HandleSearchCommand(ctx context.Context, b *bot.Bot, update *models.Update) {
 	h.log.Info("HandleSearchCommand executing")
 
-	cardName := strings.Split(update.Message.Text, " ")[1]
+	textSplit := strings.Split(update.Message.Text, " ")
+	if len(textSplit) < 2 {
+		h.log.Warn("Search command without card name", logger.String("command", update.Message.Text))
+		b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: update.Message.Chat.ID,
+			Text:   "Пожалуйста, укажите название карты после команды /search.",
+		})
+		return
+	}
+
+	cardName := strings.Join(textSplit[1:], " ")
 	if cardName == "" {
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: update.Message.Chat.ID,

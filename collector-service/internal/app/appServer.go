@@ -40,6 +40,7 @@ func InitServer(config *viper.Viper, log logger.Logger, db *mongo.Client) *App {
 	ctrlCards := controllers.NewCardsController(servCards, log)
 
 	router := gin.Default()
+	router.Use(gin.Recovery())
 
 	// Setup Swagger
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
