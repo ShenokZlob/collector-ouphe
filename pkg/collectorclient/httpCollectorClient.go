@@ -271,3 +271,47 @@ func (c *HTTPCollectorClient) DeleteCollection(ctx context.Context, collectionID
 
 	return nil
 }
+
+func (c *HTTPCollectorClient) GetUsersCollectionByName(ctx context.Context, collectionName string) (*collections.Collection, error) {
+	token, ok := authctx.GetJWT(ctx)
+	if !ok || token == "" {
+		c.Log.Error("Authorization token is missing")
+		return nil, fmt.Errorf("authorization token is missing")
+	}
+
+	c.Log.Info("Get user's collection by name", logger.String("method", "HTTPCollectorClient.GetUsersCollectionByName"), logger.String("token_auth", token), logger.String("collection_name", collectionName))
+
+	request, err := http.NewRequest(http.MethodGet, c.URL+"/collections/name/"+collectionName, nil)
+	if err != nil {
+		c.Log.Error("Failed to create request", logger.Error(err))
+		return nil, err
+	}
+
+	request.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := c.ClientHTTP.Do(request)
+	if err != nil {
+		c.Log.Error("Failed to do a request", logger.Error(err))
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var errorResponse collections.ErrorResponse
+		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
+			c.Log.Error("Failed to decode error response", logger.Error(err))
+			return nil, fmt.Errorf("failed to decode error response, status code: %d", resp.StatusCode)
+		}
+		c.Log.Error("Failed to get user's collection by name", logger.String("message", errorResponse.Message))
+		return nil, fmt.Errorf("failed to get user's collection by name, status code: %d", resp.StatusCode)
+	}
+
+	var collection collections.Collection
+	err = json.NewDecoder(resp.Body).Decode(&collection)
+	if err != nil {
+		c.Log.Error("Failed to decode a body request", logger.Error(err))
+		return nil, err
+	}
+
+	return &collection, nil
+}

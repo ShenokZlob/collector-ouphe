@@ -22,4 +22,5 @@ type CollectorClientCollections interface {
 	CreateCollection(ctx context.Context, req *collections.CreateCollectionRequest) (*collections.Collection, error)
 	RenameCollection(ctx context.Context, collectionID string, req *collections.RenameCollectionRequest) error
 	DeleteCollection(ctx context.Context, collectionID string) error
+	GetUsersCollectionByName(ctx context.Context, name string) (*collections.Collection, error)
 }

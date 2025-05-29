@@ -64,6 +64,7 @@ func InitServer(config *viper.Viper, log logger.Logger, db *mongo.Client) *App {
 		authorized.POST("/collections", ctrlCollections.CreateCollection)
 		authorized.PATCH("/collections/:id", ctrlCollections.RenameCollection)
 		authorized.DELETE("/collections/:id", ctrlCollections.DeleteCollection)
+		authorized.GET("/collections/name/:name", ctrlCollections.GetCollectionByName)
 
 		authorized.GET("/collections/:id/cards", ctrlCards.ListCardsInCollection)
 		authorized.POST("/collections/:id/cards", ctrlCards.AddCardToCollection)

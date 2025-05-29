@@ -14,8 +14,8 @@ type User struct {
 	LastName    string               `bson:"last_name,omitempty" json:"last_name,omitempty"`
 	Username    string               `bson:"username,omitempty" json:"username,omitempty"`
 	Collections []*UserCollectionRef `bson:"collections,omitempty" json:"collections,omitempty"`
-	CreatedAt   time.Time            `bson:"-" json:"created_at"`
-	UpdatedAt   time.Time            `bson:"-" json:"updated_at"`
+	CreatedAt   time.Time            `bson:"created_at,omitempty" json:"created_at"`
+	UpdatedAt   time.Time            `bson:"updated_at,omitempty" json:"updated_at"`
 }
 
 type UserCollectionRef struct {

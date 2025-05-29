@@ -68,7 +68,10 @@ func (h *CardSearchHandler) HandleSearchCommand(ctx context.Context, b *bot.Bot,
 
 func formatCards(cards []scryfall.Card) string {
 	var sb strings.Builder
-	for _, card := range cards {
+	for i, card := range cards {
+		if i > 9 {
+			break
+		}
 		sb.WriteString(card.Name + "\t")
 		if card.ImageURIs != nil {
 			sb.WriteString("Image: " + card.ImageURIs.Normal)

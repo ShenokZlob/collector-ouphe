@@ -15,6 +15,7 @@ type CollectionsRepositorer interface {
 	CreateCollection(collection *models.Collection) (*models.Collection, *models.ResponseErr)
 	RenameCollection(collection *models.Collection) (*models.Collection, *models.ResponseErr)
 	DeleteCollection(collection *models.Collection) *models.ResponseErr
+	GetCollectionByName(collection *models.Collection) (*models.Collection, *models.ResponseErr)
 }
 
 func NewCollectionsService(collectionRepository CollectionsRepositorer, log logger.Logger) *CollectionsService {
@@ -42,4 +43,8 @@ func (cs CollectionsService) RenameCollection(collecion *models.Collection) (*mo
 
 func (cs CollectionsService) DeleteCollection(collection *models.Collection) *models.ResponseErr {
 	return cs.collectionRepository.DeleteCollection(collection)
+}
+
+func (cs CollectionsService) GetCollectionByName(collection *models.Collection) (*models.Collection, *models.ResponseErr) {
+	return cs.collectionRepository.GetCollectionByName(collection)
 }

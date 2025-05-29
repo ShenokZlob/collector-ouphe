@@ -203,6 +203,52 @@ const docTemplate = `{
                 }
             }
         },
+        "/collections/{name}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Получить коллекцию по имени",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Collections"
+                ],
+                "summary": "Get collection by name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Collection name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/collections.Collection"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/collections.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/collections.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
                 "description": "Логин по Telegram ID, возвращает JWT",
@@ -431,6 +477,10 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "unauthorized"
+                },
+                "status": {
+                    "description": "Optional, can be used to indicate HTTP status code",
+                    "type": "integer"
                 }
             }
         },

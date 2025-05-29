@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -31,8 +32,20 @@ func NewRepository(client *mongo.Client) *Repository {
 
 func (r Repository) CreateUser(user *models.User) (*models.User, *models.ResponseErr) {
 	collection := r.client.Database(database).Collection(users_collection)
+
 	result, err := collection.InsertOne(context.TODO(), user)
 	if err != nil {
+		var we mongo.WriteException
+		if errors.As(err, &we) {
+			for _, e := range we.WriteErrors {
+				if e.Code == 11000 { // Duplicate key error
+					return nil, &models.ResponseErr{
+						Status:  http.StatusConflict,
+						Message: "User with this Telegram ID already exists",
+					}
+				}
+			}
+		}
 		return nil, &models.ResponseErr{
 			Status:  http.StatusInternalServerError,
 			Message: err.Error(),
@@ -117,6 +130,24 @@ func (r Repository) CreateCollection(collection *models.Collection) (*models.Col
 		collection.ObjectID = id
 	}
 
+	// Add created collection to collections_users
+	userCollectionRef := r.client.Database(database).Collection(users_collection)
+	filter := bson.D{{Key: "_id", Value: collection.UserID}}
+	update := bson.D{
+		{Key: "$push", Value: bson.D{{Key: "collections", Value: models.UserCollectionRef{
+			ObjectID: collection.ObjectID,
+			Name:     collection.Name,
+		}}}},
+		{Key: "$set", Value: bson.D{{Key: "updated_at", Value: time.Now()}}},
+	}
+	_, err = userCollectionRef.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		return nil, &models.ResponseErr{
+			Status:  http.StatusInternalServerError,
+			Message: fmt.Sprintf("Error updating user collections: %v", err),
+		}
+	}
+
 	collection.PrepareForResponse()
 	return collection, nil
 }
@@ -151,6 +182,23 @@ func (r Repository) RenameCollection(collection *models.Collection) (*models.Col
 		}
 	}
 
+	// TODO: Update collection name in user's collections
+	userCollectionRef := r.client.Database(database).Collection(users_collection)
+	userFilter := bson.M{"collections._id": objectId}
+	userUpdate := bson.M{
+		"$set": bson.M{
+			"collections.$.name": collection.Name,
+		},
+	}
+
+	_, err = userCollectionRef.UpdateMany(context.TODO(), userFilter, userUpdate)
+	if err != nil {
+		return nil, &models.ResponseErr{
+			Status:  http.StatusInternalServerError,
+			Message: fmt.Sprintf("Error updating user collections: %v", err),
+		}
+	}
+
 	return &updated, nil
 }
 
@@ -173,7 +221,48 @@ func (r Repository) DeleteCollection(collection *models.Collection) *models.Resp
 		}
 	}
 
+	// Delete collection from user's collections
+	userCollectionRef := r.client.Database(database).Collection(users_collection)
+	update := bson.D{
+		{Key: "$pull", Value: bson.D{{Key: "collections", Value: bson.D{{Key: "_id", Value: objectId}}}}},
+		{Key: "$set", Value: bson.D{{Key: "updated_at", Value: time.Now()}}},
+	}
+	filterUser := bson.D{{Key: "_id", Value: collection.UserID}}
+	_, err = userCollectionRef.UpdateOne(context.TODO(), filterUser, update)
+	if err != nil {
+		return &models.ResponseErr{
+			Status:  http.StatusInternalServerError,
+			Message: fmt.Sprintf("Error updating user collections: %v", err),
+		}
+	}
+
 	return nil
+}
+
+func (r Repository) GetCollectionByName(collection *models.Collection) (*models.Collection, *models.ResponseErr) {
+	collectionRef := r.client.Database(database).Collection(collections_collection)
+	filter := bson.D{
+		{Key: "name", Value: collection.Name},
+		{Key: "user_id", Value: collection.UserID},
+	}
+
+	var col models.Collection
+	err := collectionRef.FindOne(context.TODO(), filter).Decode(&col)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, &models.ResponseErr{
+				Status:  http.StatusNotFound,
+				Message: "Collection not found",
+			}
+		}
+		return nil, &models.ResponseErr{
+			Status:  http.StatusInternalServerError,
+			Message: fmt.Sprintf("Find collection error: %v", err),
+		}
+	}
+
+	col.PrepareForResponse()
+	return &col, nil
 }
 
 // Search in Collections collection

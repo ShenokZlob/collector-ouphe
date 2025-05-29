@@ -68,6 +68,9 @@ definitions:
       message:
         example: unauthorized
         type: string
+      status:
+        description: Optional, can be used to indicate HTTP status code
+        type: integer
     type: object
   collections.RenameCollectionRequest:
     description: Запрос для изменения названия коллекции
@@ -208,6 +211,35 @@ paths:
       security:
       - BearerAuth: []
       summary: Rename collection
+      tags:
+      - Collections
+  /collections/{name}:
+    get:
+      description: Получить коллекцию по имени
+      parameters:
+      - description: Collection name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/collections.Collection'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/collections.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/collections.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get collection by name
       tags:
       - Collections
   /login:

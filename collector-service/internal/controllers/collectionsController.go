@@ -8,6 +8,7 @@ import (
 	"github.com/ShenokZlob/collector-ouphe/pkg/contracts/collections"
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // CollectionsController отвечает за работу с коллекциями
@@ -23,6 +24,7 @@ type CollectionsServicer interface {
 	CreateCollection(collection *models.Collection) (*models.Collection, *models.ResponseErr)
 	RenameCollection(collection *models.Collection) (*models.Collection, *models.ResponseErr)
 	DeleteCollection(collection *models.Collection) *models.ResponseErr
+	GetCollectionByName(collection *models.Collection) (*models.Collection, *models.ResponseErr)
 }
 
 // NewCollectionsController создает контроллер коллекций
@@ -88,7 +90,17 @@ func (cc CollectionsController) CreateCollection(ctx *gin.Context) {
 		return
 	}
 
-	model := &models.Collection{UserID: userId, Name: req.Name}
+	if userId == "" {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, collections.ErrorResponse{Message: "Invalid user ID"})
+		return
+	}
+	userObjectId, err := bson.ObjectIDFromHex(userId)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, collections.ErrorResponse{Message: "Invalid user ID format"})
+		return
+	}
+
+	model := &models.Collection{UserID: userObjectId, Name: req.Name}
 	created, respErr := cc.collectionsService.CreateCollection(model)
 	if respErr != nil {
 		ctx.AbortWithStatusJSON(respErr.Status, respErr)
@@ -107,7 +119,7 @@ func (cc CollectionsController) CreateCollection(ctx *gin.Context) {
 // @Produce     json
 // @Param       id   path string                         true "Collection ID"
 // @Param       input body collections.RenameCollectionRequest true "Новое имя коллекции"
-// @Success     200 {object} collections.Collection
+// @Success     204 {object} collections.Collection
 // @Failure     400,401,404 {object} collections.ErrorResponse
 // @Router      /collections/{id} [patch]
 func (cc CollectionsController) RenameCollection(ctx *gin.Context) {
@@ -124,7 +136,19 @@ func (cc CollectionsController) RenameCollection(ctx *gin.Context) {
 		return
 	}
 
-	model := &models.Collection{ID: id, UserID: userId, Name: req.Name}
+	// userId string to bson.ObjectID conversion
+	if userId == "" {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, collections.ErrorResponse{Message: "Invalid user ID"})
+		return
+	}
+
+	userObjectId, err := bson.ObjectIDFromHex(userId)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, collections.ErrorResponse{Message: "Invalid user ID format"})
+		return
+	}
+
+	model := &models.Collection{ID: id, UserID: userObjectId, Name: req.Name}
 	updated, respErr := cc.collectionsService.RenameCollection(model)
 	if respErr != nil {
 		ctx.AbortWithStatusJSON(respErr.Status, respErr)
@@ -132,7 +156,7 @@ func (cc CollectionsController) RenameCollection(ctx *gin.Context) {
 	}
 
 	out := collections.Collection{ID: updated.ID, Name: updated.Name}
-	ctx.JSON(http.StatusOK, out)
+	ctx.JSON(http.StatusNoContent, out)
 }
 
 // @Summary     Delete collection
@@ -151,14 +175,62 @@ func (cc CollectionsController) DeleteCollection(ctx *gin.Context) {
 		return
 	}
 
+	if userId == "" {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, collections.ErrorResponse{Message: "Invalid user ID"})
+		return
+	}
+	userObjectId, err := bson.ObjectIDFromHex(userId)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, collections.ErrorResponse{Message: "Invalid user ID format"})
+		return
+	}
+
 	id := ctx.Param("id")
-	respErr = cc.collectionsService.DeleteCollection(&models.Collection{ID: id, UserID: userId})
+	respErr = cc.collectionsService.DeleteCollection(&models.Collection{ID: id, UserID: userObjectId})
 	if respErr != nil {
 		ctx.AbortWithStatusJSON(respErr.Status, respErr)
 		return
 	}
 
 	ctx.Status(http.StatusNoContent)
+}
+
+// @Summary     Get collection by name
+// @Description Получить коллекцию по имени
+// @Tags        Collections
+// @Security    BearerAuth
+// @Produce     json
+// @Param       name path string true "Collection name"
+// @Success     200 {object} collections.Collection
+// @Failure     401,404 {object} collections.ErrorResponse
+// @Router      /collections/{name} [get]
+func (cc CollectionsController) GetCollectionByName(ctx *gin.Context) {
+	userId, respErr := getUserFromCtx(ctx)
+	if respErr != nil {
+		ctx.AbortWithStatusJSON(respErr.Status, respErr)
+		return
+	}
+
+	if userId == "" {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, collections.ErrorResponse{Message: "Invalid user ID"})
+		return
+	}
+	userObjectId, err := bson.ObjectIDFromHex(userId)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, collections.ErrorResponse{Message: "Invalid user ID format"})
+		return
+	}
+
+	name := ctx.Param("name")
+	model := &models.Collection{Name: name, UserID: userObjectId}
+	collection, respErr := cc.collectionsService.GetCollectionByName(model)
+	if respErr != nil {
+		ctx.AbortWithStatusJSON(respErr.Status, respErr)
+		return
+	}
+
+	out := collections.Collection{ID: collection.ID, Name: collection.Name}
+	ctx.JSON(http.StatusOK, out)
 }
 
 func getUserFromCtx(ctx *gin.Context) (string, *models.ResponseErr) {

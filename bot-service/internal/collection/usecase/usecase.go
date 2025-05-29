@@ -59,10 +59,13 @@ func (u *collectionUsecaseImpl) CreateaCollection(ctx context.Context, name stri
 func (u *collectionUsecaseImpl) RenameCollection(ctx context.Context, oldName, newName string) error {
 	u.log.Info("Rename collecion", logger.String("method", "ReanameCollection"))
 
-	// TODO: get collection ID by the old name (from cache or collector service)
-	collectionID := getCollectionIdByName(oldName)
+	collection, err := u.collectorClient.GetUsersCollectionByName(ctx, oldName)
+	if err != nil {
+		u.log.Error("Error when accessing the collector service", logger.Error(err))
+		return err
+	}
 
-	err := u.collectorClient.RenameCollection(ctx, collectionID, &collections.RenameCollectionRequest{
+	err = u.collectorClient.RenameCollection(ctx, collection.ID, &collections.RenameCollectionRequest{
 		Name: newName,
 	})
 	if err != nil {
@@ -78,9 +81,13 @@ func (u *collectionUsecaseImpl) RenameCollection(ctx context.Context, oldName, n
 func (u *collectionUsecaseImpl) DeleteCollection(ctx context.Context, name string) error {
 	u.log.Info("Delete collection", logger.String("method", "DeleteCollection"))
 
-	collectionID := getCollectionIdByName(name)
+	collection, err := u.collectorClient.GetUsersCollectionByName(ctx, name)
+	if err != nil {
+		u.log.Error("Error when accessing the collector service", logger.Error(err))
+		return err
+	}
 
-	err := u.collectorClient.DeleteCollection(ctx, collectionID)
+	err = u.collectorClient.DeleteCollection(ctx, collection.ID)
 	if err != nil {
 		u.log.Error("Error when accessing the collector service", logger.Error(err))
 		return err
@@ -89,8 +96,4 @@ func (u *collectionUsecaseImpl) DeleteCollection(ctx context.Context, name strin
 	// TODO: Update cache
 
 	return nil
-}
-
-func getCollectionIdByName(name string) string {
-	return "Implement me!" + name
 }
