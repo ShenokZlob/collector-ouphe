@@ -6,6 +6,7 @@ require (
 	github.com/BlueMonday/go-scryfall v0.9.1
 	github.com/ShenokZlob/collector-ouphe/pkg v0.0.0-20250517112458-b797b2576215
 	github.com/go-telegram/bot v1.14.2
+	github.com/go-telegram/fsm v0.2.0
 	github.com/go-telegram/ui v0.5.1
 	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.8.0

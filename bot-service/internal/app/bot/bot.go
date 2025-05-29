@@ -2,6 +2,7 @@ package appbot
 
 import (
 	"context"
+	"strings"
 
 	"github.com/ShenokZlob/collector-ouphe/bot-service/internal/app"
 	authHandler "github.com/ShenokZlob/collector-ouphe/bot-service/internal/auth/handler"
@@ -15,20 +16,22 @@ import (
 	"github.com/ShenokZlob/collector-ouphe/pkg/logger"
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
+	"github.com/go-telegram/fsm"
 	"github.com/redis/go-redis/v9"
 )
 
 type AppBot struct {
-	bot          *bot.Bot
-	collectorURL string
-	log          logger.Logger
+	log logger.Logger
+	b   *bot.Bot
+	f   *fsm.FSM
 }
 
 func NewAppBot(token string, collectorURL string, log logger.Logger, redisClient *redis.Client) (*AppBot, error) {
-	// Initialize sessions
-	cache, stateMgr := app.InitSessions(redisClient)
+	appbot := &AppBot{}
 
-	// HTTPCollectorClient
+	// Initialize other dependencies
+	appbot.log = log
+	cache := app.InitCache(redisClient)
 	collectorClient := collectorclient.NewHTTPCollectorClient(collectorURL, log)
 
 	// Auth
@@ -37,19 +40,34 @@ func NewAppBot(token string, collectorURL string, log logger.Logger, redisClient
 
 	// Collection
 	collUse := collectionUsecase.NewCollectionUsecaseImpl(log, collectorClient)
-	collHand := collectionHandler.NewCollectionHandler(collUse, stateMgr, log)
+	collHand := collectionHandler.NewCollectionHandler(log, collUse)
 
 	// Card Search
 	csUse := cardsearchUsecase.NewCardSearchUsecaseImpl(log)
 	csHand := cardsearchHandler.NewCardSearchHandler(log, csUse)
 
+	// Init FSM and its callbacks
+	appbot.log.Info("Initializing FSM")
+	appbot.f = fsm.New(session.StateDefault, map[fsm.StateID]fsm.Callback{})
+	appbot.f.AddCallbacks(map[fsm.StateID]fsm.Callback{
+		session.StateAskCreateCollection: collHand.CallbackAskCreateCollection(appbot.f),
+		session.StateCreateCollection:    collHand.CallbackCreateCollection(appbot.f),
+		session.StateAskRenameCollection: collHand.CallbackAskRenameCollection(appbot.f),
+		session.StateRenameCollection:    collHand.CallbackRenameCollection(appbot.f),
+		session.StateAskDeleteCollection: collHand.CallbackAskDeleteCollection(appbot.f),
+		session.StateDeleteCollection:    collHand.CallbackDeleteCollection(appbot.f),
+	})
+
 	// Bot options
 	opts := []bot.Option{
-		bot.WithMiddlewares(authHand.RegistrationMiddleware, session.Middleware(stateMgr)),
-		bot.WithDefaultHandler(defaultHandler),
+		bot.WithMiddlewares(authHand.RegistrationMiddleware),
+		bot.WithDefaultHandler(appbot.defaultHandler),
+		bot.WithMessageTextHandler("/cancel", bot.MatchTypeExact, appbot.handlerCancel),
 	}
 
-	b, err := bot.New(token, opts...)
+	// Initialize bot
+	var err error
+	appbot.b, err = bot.New(token, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +82,7 @@ func NewAppBot(token string, collectorURL string, log logger.Logger, redisClient
 		{Command: "register", Description: "Register your account"},
 		{Command: "help", Description: "Help"},
 	}
-	_, err = b.SetMyCommands(context.TODO(), &bot.SetMyCommandsParams{
+	_, err = appbot.b.SetMyCommands(context.TODO(), &bot.SetMyCommandsParams{
 		Commands: commands,
 	})
 	if err != nil {
@@ -74,35 +92,97 @@ func NewAppBot(token string, collectorURL string, log logger.Logger, redisClient
 
 	// Initialize router
 
-	// Cancel command
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/cancel", bot.MatchTypeExact, session.CancelHandler(stateMgr))
-
 	// Auth
-	b.RegisterHandler(bot.HandlerTypeMessageText, "/register", bot.MatchTypeExact, authHand.HandleRegister)
+	appbot.b.RegisterHandler(bot.HandlerTypeMessageText, "/register", bot.MatchTypeExact, authHand.HandleRegister)
 
 	// Collection
-	b.RegisterHandler(bot.HandlerTypeMessageText, "collections", bot.MatchTypeCommand, collHand.GetCollectionsListCommand)
-	b.RegisterHandler(bot.HandlerTypeMessageText, "collection_new", bot.MatchTypeCommand, collHand.CreateCollectionCommand)
-	b.RegisterHandler(bot.HandlerTypeMessageText, "collection_rename", bot.MatchTypeCommand, collHand.RenameCollectionCommand)
-	b.RegisterHandler(bot.HandlerTypeMessageText, "collection_delete", bot.MatchTypeCommand, collHand.DeleteCollectionCommand)
+	appbot.b.RegisterHandler(bot.HandlerTypeMessageText, "collections", bot.MatchTypeCommand, collHand.GetCollectionsListCommand)
+	appbot.b.RegisterHandler(bot.HandlerTypeMessageText, "collection_new", bot.MatchTypeCommand, collHand.CreateCollectionCommand(appbot.f))
+	appbot.b.RegisterHandler(bot.HandlerTypeMessageText, "collection_rename", bot.MatchTypeCommand, collHand.RenameCollectionCommand(appbot.f))
+	appbot.b.RegisterHandler(bot.HandlerTypeMessageText, "collection_delete", bot.MatchTypeCommand, collHand.DeleteCollectionCommand(appbot.f))
 
 	// Card Search
-	b.RegisterHandler(bot.HandlerTypeMessageText, "search", bot.MatchTypeCommand, csHand.HandleSearchCommand)
+	appbot.b.RegisterHandler(bot.HandlerTypeMessageText, "search", bot.MatchTypeCommand, csHand.HandleSearchCommand)
 
-	return &AppBot{
-		bot:          b,
-		collectorURL: collectorURL,
-		log:          log,
-	}, nil
+	return appbot, nil
 }
 
-func (a *AppBot) Run(ctx context.Context) {
-	a.bot.Start(ctx)
+func (ab *AppBot) Run(ctx context.Context) {
+	ab.b.Start(ctx)
 }
 
-func defaultHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
+func (ab *AppBot) defaultHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
+	if update.Message == nil {
+		return
+	}
+
+	userID := update.Message.From.ID
+	chatID := update.Message.Chat.ID
+
+	currentState := ab.f.Current(userID)
+
+	switch currentState {
+	case session.StateDefault:
+		ab.b.SendMessage(ctx, &bot.SendMessageParams{
+			ChatID: chatID,
+			Text:   "Используйте /help для получения списка команд.",
+		})
+		return
+
+	case session.StateAskCreateCollection:
+		collectionName := update.Message.Text
+		ab.f.Transition(userID, session.StateCreateCollection, b, chatID, collectionName, userID, ctx)
+		return
+
+	case session.StateAskRenameCollection:
+		resp := update.Message.Text
+		collectionsNames := strings.Split(resp, " ")
+		if len(collectionsNames) != 2 {
+			ab.b.SendMessage(ctx, &bot.SendMessageParams{
+				ChatID: chatID,
+				Text:   "Пожалуйста, введите старое и новое название коллекции через пробел.",
+			})
+		}
+		ab.f.Transition(userID, session.StateRenameCollection, b, chatID, collectionsNames[0], collectionsNames[1], userID, ctx)
+		return
+
+	case session.StateAskDeleteCollection:
+		collectionName := update.Message.Text
+		ab.f.Transition(userID, session.StateDeleteCollection, b, chatID, collectionName, userID, ctx)
+		return
+
+	default:
+		ab.log.Warn("unexpected state ", logger.String("state", string(currentState)))
+	}
+
+}
+
+func (ab *AppBot) handlerCancel(ctx context.Context, b *bot.Bot, update *models.Update) {
+	userID := update.Message.From.ID
+	chatID := update.Message.Chat.ID
+
+	currentState := ab.f.Current(userID)
+
+	if currentState == session.StateDefault {
+		return
+	}
+
 	b.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID: update.Message.Chat.ID,
-		Text:   "Choose a command",
+		ChatID: chatID,
+		Text:   "Canceled",
 	})
+
+	ab.f.Transition(userID, session.StateDefault)
+}
+
+func (ap *AppBot) callbackFinish(f *fsm.FSM, args ...any) {
+	chatID := args[0]
+	userID := args[1].(int64)
+
+	ap.b.SendMessage(context.Background(), &bot.SendMessageParams{
+		ChatID: chatID,
+		Text:   "Успешный успех!",
+	})
+
+	f.Transition(userID, session.StateDefault)
 }
